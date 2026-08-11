@@ -49,6 +49,40 @@ export type ResultadoEvento = {
  */
 const MARGEN_FUTURO_MS = 60 * 60 * 1000;
 
+/**
+ * Registra un movimiento generado por el propio servidor (armado de un ciclo,
+ * liberacion, recall). Sigue siendo un INSERT en movimiento_caja: no hay otra
+ * forma de mover una caja, ni siquiera desde adentro.
+ */
+export async function registrarMovimiento(
+  db: Db,
+  datos: {
+    cajaId: string;
+    estadoDesde: EstadoCaja;
+    estadoHasta: EstadoCaja;
+    usuarioId: string;
+    cicloId?: string | null | undefined;
+    cirugiaId?: string | null | undefined;
+    ocurridoEn: string;
+    observacion?: string | null | undefined;
+  },
+): Promise<void> {
+  await db
+    .insert(schema.movimientoCaja)
+    .values({
+      id: crypto.randomUUID(),
+      cajaId: datos.cajaId,
+      estadoDesde: datos.estadoDesde,
+      estadoHasta: datos.estadoHasta,
+      usuarioId: datos.usuarioId,
+      cicloId: datos.cicloId ?? null,
+      cirugiaId: datos.cirugiaId ?? null,
+      ocurridoEn: datos.ocurridoEn,
+      observacion: datos.observacion ?? null,
+    })
+    .run();
+}
+
 export async function sincronizarEventos(
   db: Db,
   usuarioDeLaSesion: string,

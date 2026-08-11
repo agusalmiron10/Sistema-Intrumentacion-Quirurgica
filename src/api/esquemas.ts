@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { ESTADOS_CAJA } from '../dominio/estados';
+import {
+  ESTADOS_CAJA,
+  METODOS_ESTERILIZACION,
+  RESULTADOS_CONTROL,
+} from '../dominio/estados';
 import { normalizarCodigo } from '../dominio/identificadores';
 
 /** ISO-8601 UTC, que es como guardamos todos los timestamps. */
@@ -115,6 +119,55 @@ export const sincronizarSchema = z.object({
    * entero. El tope evita que un cliente con la cola corrupta tumbe el Worker.
    */
   eventos: z.array(eventoSchema).min(1).max(500),
+});
+
+// ---------------------------------------------------------------------------
+// Esterilizacion
+// ---------------------------------------------------------------------------
+
+const resultadoControl = z.enum(RESULTADOS_CONTROL);
+
+export const crearCicloSchema = z.object({
+  numeroLote: z.string().trim().min(1).max(40),
+  equipoId: z.string().min(1).max(64),
+  metodo: z.enum(METODOS_ESTERILIZACION),
+  iniciadoEn: fechaIso,
+  /** Ids o codigos de las cajas escaneadas al cargar el equipo. */
+  cajaRefs: z.array(z.string().trim().min(1)).min(1).max(100),
+  observacion: z.string().trim().max(500).nullish(),
+});
+
+export const finalizarCicloSchema = z.object({
+  finalizadoEn: fechaIso,
+  temperaturaC: z.number().int().min(0).max(300).nullish(),
+  tiempoMin: z.number().int().min(0).max(2000).nullish(),
+});
+
+export const controlesSchema = z
+  .object({
+    controlFisico: resultadoControl.optional(),
+    controlQuimico: resultadoControl.optional(),
+    controlBiologico: resultadoControl.optional(),
+    ocurridoEn: fechaIso.optional(),
+  })
+  .refine(
+    (v) =>
+      v.controlFisico !== undefined ||
+      v.controlQuimico !== undefined ||
+      v.controlBiologico !== undefined,
+    { message: 'Hay que indicar al menos un control' },
+  );
+
+export const liberarCicloSchema = z.object({
+  liberadoEn: fechaIso.optional(),
+  /** Sobreescribe la vigencia por defecto: depende del empaque y de la politica. */
+  diasVigencia: z.number().int().min(1).max(1095).optional(),
+});
+
+export const filtrosCicloSchema = z.object({
+  controlBiologico: resultadoControl.optional(),
+  equipoId: z.string().min(1).optional(),
+  limite: z.coerce.number().int().min(1).max(200).default(50),
 });
 
 export type Evento = z.infer<typeof eventoSchema>;
