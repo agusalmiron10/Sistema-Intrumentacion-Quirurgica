@@ -85,6 +85,39 @@ export const etiquetasSchema = z.object({
   incluirBorde: z.boolean().default(true),
 });
 
+export const ingresoSchema = z.object({
+  usuarioId: z.string().min(1).max(64),
+  /** 4 a 6 digitos: se tipea con guantes. La seguridad la da el bloqueo. */
+  pin: z.string().regex(/^\d{4,6}$/, 'El PIN son 4 a 6 digitos'),
+});
+
+const eventoSchema = z.object({
+  /** UUID generado por el cliente: es la clave de idempotencia. */
+  id: z.uuid(),
+  cajaRef: z.string().trim().min(1).max(64),
+  /**
+   * Quien escaneo, segun el dispositivo. No se deduce de la sesion: la cola
+   * offline puede sincronizarse horas despues, cuando en la tablet ya ingreso
+   * otra persona, y el evento tiene que quedar a nombre de quien lo hizo.
+   */
+  usuarioId: z.string().min(1).max(64),
+  estadoDesde: z.enum(ESTADOS_CAJA),
+  estadoHasta: z.enum(ESTADOS_CAJA),
+  ocurridoEn: fechaIso,
+  cirugiaId: z.string().min(1).max(64).nullish(),
+  cicloId: z.string().min(1).max(64).nullish(),
+  observacion: z.string().trim().max(500).nullish(),
+});
+
+export const sincronizarSchema = z.object({
+  /**
+   * Se aceptan lotes porque la cola offline puede haber juntado un turno
+   * entero. El tope evita que un cliente con la cola corrupta tumbe el Worker.
+   */
+  eventos: z.array(eventoSchema).min(1).max(500),
+});
+
+export type Evento = z.infer<typeof eventoSchema>;
 export type CrearCaja = z.infer<typeof crearCajaSchema>;
 export type ActualizarCaja = z.infer<typeof actualizarCajaSchema>;
 export type FiltrosCaja = z.infer<typeof filtrosCajaSchema>;
