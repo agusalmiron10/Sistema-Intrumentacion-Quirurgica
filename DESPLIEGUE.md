@@ -1,5 +1,15 @@
 # Despliegue
 
+## Estado actual
+
+**Desplegado:** https://instrumentacion.instrumentacion-quirurgica-ximena.workers.dev
+
+- Base D1 `instrumentacion` creada, con las migraciones aplicadas (`database_id` ya está en `wrangler.toml`).
+- `SESION_SECRET` cargado como secret de Cloudflare, generado al azar.
+- La base de producción está **vacía a propósito**: el seed de desarrollo no se cargó. Falta dar de alta usuarios e inventario (pasos 3 y 4).
+
+Para volver a desplegar después de un cambio: `npm run deploy`.
+
 Los dos pasos que siguen necesitan tu sesión de GitHub y la de Cloudflare, así
 que los corrés vos. Todo lo demás ya está listo en el repositorio.
 

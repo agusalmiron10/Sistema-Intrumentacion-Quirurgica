@@ -7,7 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 # Dominio que se imprime adentro de cada QR. Tiene que ser el definitivo antes
 # de imprimir el primer pliego: cambiarlo obliga a reimprimir las etiquetas.
 # Cuanto mas corto, menos denso el QR y mejor lee una etiqueta gastada.
-DOMINIO_PUBLICO = ""
+DOMINIO_PUBLICO = "https://instrumentacion.instrumentacion-quirurgica-ximena.workers.dev"
 
 # OJO: SESION_SECRET NO va aca y no puede volver a ponerse aca.
 #
@@ -28,9 +28,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "instrumentacion"
-# Reemplazar por el id real luego de `wrangler d1 create instrumentacion`.
-# En local y en los tests este valor no se usa.
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "04b9ed4d-ec55-440e-b7fd-378a9b8c68ea"
 migrations_dir = "migrations"
 
 [observability]
