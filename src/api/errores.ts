@@ -45,15 +45,56 @@ export interface ErrorDominio {
  * Reconoce un abort de trigger. Devuelve null si el error es otra cosa
  * (problema de red, bug, violacion de FK), que debe propagarse como 500.
  */
+/**
+ * Junta el mensaje del error y el de todas sus causas anidadas.
+ *
+ * Drizzle envuelve los errores del driver en un DrizzleQueryError cuyo mensaje
+ * es "Failed query: ...": el abort del trigger queda dos o tres niveles mas
+ * abajo, en la cadena de `cause`. Mirar solo el mensaje de arriba haria que
+ * cada conflicto de dominio saliera como un 500.
+ */
+function textoDeError(error: unknown): string {
+  const partes: string[] = [];
+  let actual: unknown = error;
+
+  for (let nivel = 0; nivel < 8 && actual !== undefined && actual !== null; nivel++) {
+    if (actual instanceof Error) {
+      partes.push(actual.message);
+      actual = actual.cause;
+    } else {
+      partes.push(String(actual));
+      break;
+    }
+  }
+
+  return partes.join(' | ');
+}
+
+/**
+ * Deja solo el mensaje que escribimos nosotros en el RAISE(ABORT).
+ *
+ * Lo que llega del driver viene con ruido pegado atras
+ * (": SQLITE_CONSTRAINT (extended: SQLITE_CONSTRAINT_TRIGGER)") y repetido una
+ * vez por cada nivel de la cadena de causas. Eso no puede terminar en la
+ * pantalla de una instrumentadora.
+ */
+function limpiarMensaje(crudo: string): string {
+  return crudo
+    .split(' | ')[0]!
+    .replace(/:\s*SQLITE_[A-Z_]+.*$/s, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function interpretarErrorDeTrigger(error: unknown): ErrorDominio | null {
-  const texto = error instanceof Error ? error.message : String(error);
+  const texto = textoDeError(error);
   for (const codigo of CODIGOS_DOMINIO) {
     const marca = `${codigo}:`;
     const posicion = texto.indexOf(marca);
     if (posicion !== -1) {
       return {
         codigo,
-        mensaje: texto.slice(posicion + marca.length).trim(),
+        mensaje: limpiarMensaje(texto.slice(posicion + marca.length)),
         estadoHttp: ESTADO_HTTP[codigo],
       };
     }
@@ -76,7 +117,7 @@ export function interpretarErrorD1(error: unknown): ErrorApi | null {
   const deTrigger = interpretarErrorDeTrigger(error);
   if (deTrigger) return deTrigger;
 
-  const texto = error instanceof Error ? error.message : String(error);
+  const texto = textoDeError(error);
 
   if (texto.includes('UNIQUE constraint failed')) {
     const columna = /UNIQUE constraint failed: ([\w.,\s]+)/.exec(texto)?.[1]?.trim();
