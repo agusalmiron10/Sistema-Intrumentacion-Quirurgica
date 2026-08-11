@@ -8,10 +8,37 @@ export interface Variables {
 
 export type Entorno = { Bindings: Cloudflare.Env; Variables: Variables };
 
-/** Secreto de firma. Se exige explicito para no firmar con algo vacio. */
+/**
+ * Valores que alguna vez estuvieron en un archivo versionado o en un ejemplo.
+ * Cualquiera que lea el repositorio los conoce, asi que firmar con ellos
+ * equivale a no firmar: se rechazan explicito en vez de dejar el sistema
+ * funcionando con una puerta abierta que nadie ve.
+ */
+const SECRETOS_QUEMADOS = new Set([
+  'desarrollo-inseguro-cambiar-en-produccion',
+  'solo-para-desarrollo-local-no-usar-en-produccion',
+]);
+
+/** Secreto de firma. Falla cerrado: sin secreto valido no se emite sesion. */
 export function secretoDeSesion(env: Cloudflare.Env): string {
   const secreto = env.SESION_SECRET?.trim();
-  if (!secreto) throw new Error('Falta configurar SESION_SECRET');
+
+  if (!secreto) {
+    throw new Error(
+      'Falta SESION_SECRET. En produccion: wrangler secret put SESION_SECRET. ' +
+        'En local: copiar .dev.vars.example a .dev.vars',
+    );
+  }
+
+  if (SECRETOS_QUEMADOS.has(secreto) && env.DOMINIO_PUBLICO) {
+    // El dominio publico configurado indica que esto es un despliegue real y
+    // no `wrangler dev`.
+    throw new Error(
+      'SESION_SECRET es un valor de ejemplo publico. Generar uno propio con ' +
+        'wrangler secret put SESION_SECRET',
+    );
+  }
+
   return secreto;
 }
 

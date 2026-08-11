@@ -1,0 +1,6 @@
+# Copiar a .dev.vars (que esta en .gitignore) para trabajar en local.
+# En produccion este valor se carga con:  npx wrangler secret put SESION_SECRET
+#
+# Solo para desarrollo. Para generar uno de verdad:
+#   node -e "console.log(crypto.randomUUID() + crypto.randomUUID())"
+SESION_SECRET="solo-para-desarrollo-local-no-usar-en-produccion"

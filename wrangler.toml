@@ -8,9 +8,16 @@ compatibility_flags = ["nodejs_compat"]
 # de imprimir el primer pliego: cambiarlo obliga a reimprimir las etiquetas.
 # Cuanto mas corto, menos denso el QR y mejor lee una etiqueta gastada.
 DOMINIO_PUBLICO = ""
-# Firma de los tokens de sesion. En produccion se pisa con un secreto real:
-#   npx wrangler secret put SESION_SECRET
-SESION_SECRET = "desarrollo-inseguro-cambiar-en-produccion"
+
+# OJO: SESION_SECRET NO va aca y no puede volver a ponerse aca.
+#
+# En Cloudflare las vars de wrangler.toml y los secrets comparten namespace: si
+# el nombre esta declarado en [vars], cada `wrangler deploy` pisa el secreto
+# real con el valor del archivo. Ademas, este archivo esta en un repositorio, y
+# con ese valor cualquiera puede firmar un token de sesion valido.
+#
+# En produccion:  npx wrangler secret put SESION_SECRET
+# En local:       copiar .dev.vars.example a .dev.vars (esta en .gitignore)
 
 # La PWA se sirve desde el mismo Worker que la API: mismo origen, sin CORS ni
 # cookies cross-site, y un solo deploy.

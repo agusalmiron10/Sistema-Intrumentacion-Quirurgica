@@ -15,7 +15,14 @@ export default defineConfig({
     cloudflareTest(async () => ({
       wrangler: { configPath: './wrangler.toml' },
       miniflare: {
-        bindings: { MIGRACIONES: await readD1Migrations(path.join(__dirname, 'migrations')) },
+        bindings: {
+          MIGRACIONES: await readD1Migrations(path.join(__dirname, 'migrations')),
+          // El secreto de los tests vive aca y no en wrangler.toml: en
+          // Cloudflare las vars y los secrets comparten namespace, asi que
+          // declararlo en la config del Worker haria que cada deploy pisara el
+          // secreto real de produccion con el valor del archivo.
+          SESION_SECRET: 'secreto-de-tests-sin-valor-fuera-de-vitest',
+        },
       },
     })),
   ],

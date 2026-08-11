@@ -61,12 +61,12 @@ PINs de desarrollo: Marcela `1234`, Silvia `2345`, Roberto `3456`, admin `9999`.
 npm test
 ```
 
-Para producción hay que crear la base y pegar el `database_id` real en
-`wrangler.toml`:
+Para trabajar en local hace falta copiar `.dev.vars.example` a `.dev.vars`: ahí
+va el secreto de firma de sesión, que no está en `wrangler.toml` a propósito
+(el porqué está en [DESPLIEGUE.md](DESPLIEGUE.md)).
 
-```bash
-npx wrangler d1 create instrumentacion
-```
+Los pasos para publicar en GitHub y desplegar en Cloudflare están en
+**[DESPLIEGUE.md](DESPLIEGUE.md)**.
 
 ## Cómo está organizado
 
