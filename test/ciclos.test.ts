@@ -286,7 +286,8 @@ describe('cuarentena y liberacion', () => {
       token: tokenSupervisor,
       cuerpo: {},
     });
-    expect(segunda.estado).toBe(422);
+    // 409 y no 422: no es un pedido mal formado, es que eso ya paso.
+    expect(segunda.estado).toBe(409);
     expect(segunda.cuerpo.error).toBe('ciclo_ya_liberado');
   });
 });

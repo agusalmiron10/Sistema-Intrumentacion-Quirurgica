@@ -21,6 +21,7 @@
   "dependencies": {
     "@zxing/browser": "^0.2.1",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "hono": "^4.13.1",
     "idb": "^8.0.3",
     "pdf-lib": "^1.17.1",
