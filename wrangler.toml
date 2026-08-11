@@ -1,0 +1,15 @@
+name = "instrumentacion"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "instrumentacion"
+# Reemplazar por el id real luego de `wrangler d1 create instrumentacion`.
+# En local y en los tests este valor no se usa.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[observability]
+enabled = true

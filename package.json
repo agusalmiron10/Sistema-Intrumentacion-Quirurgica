@@ -1,0 +1,32 @@
+{
+  "name": "instrumentacion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sistema de gestion de instrumental quirurgico - trazabilidad de cajas, ciclos de esterilizacion y descartables por lote",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply instrumentacion --local",
+    "db:migrate:remote": "wrangler d1 migrations apply instrumentacion --remote",
+    "db:seed:local": "wrangler d1 execute instrumentacion --local --file=./seed/seed.sql",
+    "db:reset:local": "node scripts/reset-local.mjs && npm run db:migrate:local && npm run db:seed:local",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.21.0",
+    "@types/node": "^26.2.0",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.120.1"
+  }
+}
