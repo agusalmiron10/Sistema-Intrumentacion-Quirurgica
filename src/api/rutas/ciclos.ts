@@ -1,4 +1,4 @@
-import { Hono, type Context } from 'hono';
+import { Hono } from 'hono';
 import { asc, eq } from 'drizzle-orm';
 
 import { crearDb, schema } from '../../db';
@@ -6,14 +6,13 @@ import {
   cajasDelCiclo,
   cargarControles,
   crearCiclo,
-  ErrorCiclo,
   finalizarCiclo,
   impactoDeCiclo,
   liberarCiclo,
   listarCiclos,
   obtenerCiclo,
 } from '../../servicios/ciclos';
-import { interpretarErrorD1 } from '../errores';
+import { responderError } from '../respuestas';
 import {
   controlesSchema,
   crearCicloSchema,
@@ -25,22 +24,6 @@ import { requiereSesion, type Entorno } from '../middleware';
 import { leerJson, leerQuery } from '../validacion';
 
 export const rutasCiclos = new Hono<Entorno>();
-
-/** Traduce los errores de negocio y los abortos de trigger a HTTP. */
-function responder(c: Context<Entorno>, error: unknown): Response {
-  if (error instanceof ErrorCiclo) {
-    const estado = error.codigo === 'ciclo_inexistente' ? 404 : 422;
-    return c.json({ error: error.codigo, mensaje: error.message, detalle: error.detalle }, estado);
-  }
-  const interpretado = interpretarErrorD1(error);
-  if (interpretado) {
-    return c.json(
-      { error: interpretado.codigo, mensaje: interpretado.mensaje },
-      interpretado.estadoHttp,
-    );
-  }
-  throw error;
-}
 
 rutasCiclos.get('/equipos', async (c) => {
   const db = crearDb(c.env.DB);
@@ -67,7 +50,7 @@ rutasCiclos.post('/', requiereSesion, async (c) => {
     const ciclo = await crearCiclo(crearDb(c.env.DB), c.get('sesion').usuarioId, cuerpo.datos);
     return c.json(ciclo, 201);
   } catch (error) {
-    return responder(c, error);
+    return responderError(c, error);
   }
 });
 
@@ -93,7 +76,7 @@ rutasCiclos.post('/:ref/finalizar', requiereSesion, async (c) => {
       ),
     );
   } catch (error) {
-    return responder(c, error);
+    return responderError(c, error);
   }
 });
 
@@ -117,7 +100,7 @@ rutasCiclos.post('/:ref/controles', requiereSesion, async (c) => {
     );
     return c.json(resultado);
   } catch (error) {
-    return responder(c, error);
+    return responderError(c, error);
   }
 });
 
@@ -146,7 +129,7 @@ rutasCiclos.post('/:ref/liberar', requiereSesion, async (c) => {
       }),
     );
   } catch (error) {
-    return responder(c, error);
+    return responderError(c, error);
   }
 });
 
@@ -155,6 +138,6 @@ rutasCiclos.get('/:ref/impacto', async (c) => {
   try {
     return c.json(await impactoDeCiclo(crearDb(c.env.DB), c.req.param('ref')));
   } catch (error) {
-    return responder(c, error);
+    return responderError(c, error);
   }
 });

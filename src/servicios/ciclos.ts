@@ -4,22 +4,13 @@ import type { Db } from '../db';
 import { schema } from '../db';
 import type { EstadoCaja, MetodoEsterilizacion, ResultadoControl } from '../dominio/estados';
 import { sePuedeLiberar, vencimientoDesde } from '../dominio/esterilizacion';
+import { ErrorDeNegocio } from '../api/respuestas';
 import { resolverCaja } from './cajas';
 import { registrarMovimiento } from './eventos';
 
 export type Ciclo = typeof schema.cicloEsterilizacion.$inferSelect;
 
-/** Error de negocio con un slug estable, igual que los abortos de trigger. */
-export class ErrorCiclo extends Error {
-  constructor(
-    readonly codigo: string,
-    mensaje: string,
-    readonly detalle?: unknown,
-  ) {
-    super(mensaje);
-    this.name = 'ErrorCiclo';
-  }
-}
+export { ErrorDeNegocio as ErrorCiclo };
 
 // ---------------------------------------------------------------------------
 // Armado del ciclo
@@ -44,7 +35,7 @@ export interface DatosCiclo {
  */
 export async function crearCiclo(db: Db, usuarioId: string, datos: DatosCiclo): Promise<Ciclo> {
   if (datos.cajaRefs.length === 0) {
-    throw new ErrorCiclo('ciclo_vacio', 'Un ciclo tiene que llevar al menos una caja');
+    throw new ErrorDeNegocio('ciclo_vacio', 'Un ciclo tiene que llevar al menos una caja');
   }
 
   const resueltas: { id: string; codigo: string; estado: EstadoCaja }[] = [];
@@ -66,7 +57,7 @@ export async function crearCiclo(db: Db, usuarioId: string, datos: DatosCiclo): 
   }
 
   if (inexistentes.length > 0 || noListas.length > 0) {
-    throw new ErrorCiclo(
+    throw new ErrorDeNegocio(
       'cajas_no_listas',
       'No se armo el ciclo porque hay cajas que no estan en armado',
       { inexistentes, noListas },
@@ -163,9 +154,9 @@ export async function finalizarCiclo(
   },
 ): Promise<Ciclo> {
   const ciclo = await obtenerCiclo(db, cicloId);
-  if (!ciclo) throw new ErrorCiclo('ciclo_inexistente', 'No existe ese ciclo');
+  if (!ciclo) throw new ErrorDeNegocio('ciclo_inexistente', 'No existe ese ciclo');
   if (ciclo.finalizadoEn) {
-    throw new ErrorCiclo('ciclo_ya_finalizado', 'El ciclo ya estaba finalizado');
+    throw new ErrorDeNegocio('ciclo_ya_finalizado', 'El ciclo ya estaba finalizado');
   }
 
   await db
@@ -216,7 +207,7 @@ export async function cargarControles(
   },
 ): Promise<ResultadoControles> {
   const ciclo = await obtenerCiclo(db, cicloId);
-  if (!ciclo) throw new ErrorCiclo('ciclo_inexistente', 'No existe ese ciclo');
+  if (!ciclo) throw new ErrorDeNegocio('ciclo_inexistente', 'No existe ese ciclo');
 
   const cambios: Partial<typeof schema.cicloEsterilizacion.$inferInsert> = {};
   if (datos.controlFisico) cambios.controlFisico = datos.controlFisico;
@@ -224,7 +215,7 @@ export async function cargarControles(
   if (datos.controlBiologico) cambios.controlBiologico = datos.controlBiologico;
 
   if (Object.keys(cambios).length === 0) {
-    throw new ErrorCiclo('sin_cambios', 'No se indico ningun control');
+    throw new ErrorDeNegocio('sin_cambios', 'No se indico ningun control');
   }
 
   // Reescribir un control ya cargado lo aborta el trigger
@@ -255,8 +246,8 @@ export async function liberarCiclo(
   datos: { liberadoEn: string; diasVigencia?: number | undefined },
 ): Promise<{ ciclo: Ciclo; liberadas: string[]; sinLiberar: { codigo: string; estado: string }[] }> {
   const ciclo = await obtenerCiclo(db, cicloId);
-  if (!ciclo) throw new ErrorCiclo('ciclo_inexistente', 'No existe ese ciclo');
-  if (ciclo.liberadoEn) throw new ErrorCiclo('ciclo_ya_liberado', 'El ciclo ya estaba liberado');
+  if (!ciclo) throw new ErrorDeNegocio('ciclo_inexistente', 'No existe ese ciclo');
+  if (ciclo.liberadoEn) throw new ErrorDeNegocio('ciclo_ya_liberado', 'El ciclo ya estaba liberado');
 
   if (
     !sePuedeLiberar({
@@ -265,7 +256,7 @@ export async function liberarCiclo(
       biologico: ciclo.controlBiologico as ResultadoControl,
     })
   ) {
-    throw new ErrorCiclo(
+    throw new ErrorDeNegocio(
       'controles_incompletos',
       'No se puede liberar: los tres controles tienen que estar conformes',
       {
@@ -365,7 +356,7 @@ export async function dispararRecall(
   ocurridoEn: string,
 ): Promise<Impacto> {
   const ciclo = await obtenerCiclo(db, cicloId);
-  if (!ciclo) throw new ErrorCiclo('ciclo_inexistente', 'No existe ese ciclo');
+  if (!ciclo) throw new ErrorDeNegocio('ciclo_inexistente', 'No existe ese ciclo');
 
   const cajas: CajaImpactada[] = [];
 
@@ -479,7 +470,7 @@ export async function cirugiasAfectadas(db: Db, cicloId: string): Promise<Cirugi
 /** Vista de impacto sin escribir nada: sirve para mirar antes de decidir. */
 export async function impactoDeCiclo(db: Db, cicloId: string): Promise<Impacto> {
   const ciclo = await obtenerCiclo(db, cicloId);
-  if (!ciclo) throw new ErrorCiclo('ciclo_inexistente', 'No existe ese ciclo');
+  if (!ciclo) throw new ErrorDeNegocio('ciclo_inexistente', 'No existe ese ciclo');
 
   const cajas: CajaImpactada[] = (await cajasDelCiclo(db, ciclo.id)).map((caja) => {
     const estado = caja.estado as EstadoCaja;

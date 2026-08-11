@@ -4,8 +4,11 @@ import { sql } from 'drizzle-orm';
 import { crearDb, schema } from './db';
 import { rutasCajas } from './api/rutas/cajas';
 import { rutasEtiquetas } from './api/rutas/etiquetas';
+import { rutasCatalogos } from './api/rutas/catalogos';
 import { rutasCiclos } from './api/rutas/ciclos';
+import { rutasCirugias } from './api/rutas/cirugias';
 import { rutasEventos } from './api/rutas/eventos';
+import { rutasPlantillas } from './api/rutas/plantillas';
 import { rutasSesion } from './api/rutas/sesion';
 import type { Entorno } from './api/middleware';
 import { resolverCaja } from './servicios/cajas';
@@ -25,6 +28,9 @@ app.route('/api/cajas', rutasCajas);
 app.route('/api/etiquetas', rutasEtiquetas);
 app.route('/api/eventos', rutasEventos);
 app.route('/api/ciclos', rutasCiclos);
+app.route('/api/plantillas', rutasPlantillas);
+app.route('/api/cirugias', rutasCirugias);
+app.route('/api', rutasCatalogos);
 
 function escapar(texto: string): string {
   return texto.replace(

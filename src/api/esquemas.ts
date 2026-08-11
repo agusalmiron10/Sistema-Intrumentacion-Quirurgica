@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   ESTADOS_CAJA,
+  ESTADOS_CIRUGIA,
   METODOS_ESTERILIZACION,
   RESULTADOS_CONTROL,
 } from '../dominio/estados';
@@ -168,6 +169,67 @@ export const filtrosCicloSchema = z.object({
   controlBiologico: resultadoControl.optional(),
   equipoId: z.string().min(1).optional(),
   limite: z.coerce.number().int().min(1).max(200).default(50),
+});
+
+// ---------------------------------------------------------------------------
+// Plantillas y cirugias
+// ---------------------------------------------------------------------------
+
+export const crearPlantillaSchema = z.object({
+  procedimientoId: z.string().min(1).max(64),
+  /** null = plantilla generica del procedimiento, sin preferencia de cirujano. */
+  cirujanoId: z.string().min(1).max(64).nullish(),
+  notas: z.string().trim().max(1000).nullish(),
+  cajas: z
+    .array(z.object({ cajaId: z.string().min(1), obligatoria: z.boolean().optional() }))
+    .max(50)
+    .default([]),
+  descartables: z
+    .array(
+      z.object({
+        descartableId: z.string().min(1),
+        cantidad: z.number().int().positive().max(999),
+      }),
+    )
+    .max(100)
+    .default([]),
+});
+
+export const filtrosPlantillaSchema = z.object({
+  procedimientoId: z.string().min(1).optional(),
+  cirujanoId: z.string().min(1).optional(),
+  soloVigentes: z
+    .enum(['1', '0'])
+    .default('1')
+    .transform((v) => v === '1'),
+});
+
+export const crearCirugiaSchema = z.object({
+  /** Identificador opaco. Nada de nombre, documento ni diagnostico. */
+  pacienteRef: z.string().trim().min(1).max(64),
+  procedimientoId: z.string().min(1).max(64),
+  cirujanoId: z.string().min(1).max(64),
+  instrumentadoraId: z.string().min(1).max(64).nullish(),
+  quirofano: z.string().trim().max(20).nullish(),
+  programadaPara: fechaIso,
+  notas: z.string().trim().max(1000).nullish(),
+});
+
+export const filtrosCirugiaSchema = z.object({
+  desde: fechaIso.optional(),
+  hasta: fechaIso.optional(),
+  estado: z.enum(ESTADOS_CIRUGIA).optional(),
+  limite: z.coerce.number().int().min(1).max(500).default(100),
+});
+
+export const cambiarEstadoCirugiaSchema = z.object({
+  estado: z.enum(ESTADOS_CIRUGIA),
+  ocurridoEn: fechaIso.optional(),
+});
+
+export const cajaDeCirugiaSchema = z.object({
+  cajaRef: z.string().trim().min(1).max(64),
+  usada: z.boolean().optional(),
 });
 
 export type Evento = z.infer<typeof eventoSchema>;
