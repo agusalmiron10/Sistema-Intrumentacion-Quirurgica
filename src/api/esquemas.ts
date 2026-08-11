@@ -5,6 +5,7 @@ import {
   ESTADOS_CIRUGIA,
   METODOS_ESTERILIZACION,
   RESULTADOS_CONTROL,
+  ROLES_USUARIO,
 } from '../dominio/estados';
 import { normalizarCodigo } from '../dominio/identificadores';
 
@@ -89,6 +90,37 @@ export const etiquetasSchema = z.object({
   ladoQrMm: z.number().min(20).max(60).default(25),
   incluirBorde: z.boolean().default(true),
 });
+
+// ---------------------------------------------------------------------------
+// Usuarios y configuracion inicial
+// ---------------------------------------------------------------------------
+
+const pin = z.string().regex(/^\d{4,6}$/, 'El PIN son 4 a 6 digitos');
+
+export const configuracionInicialSchema = z.object({
+  nombre: z.string().trim().min(1).max(120),
+  email: z.email().max(160),
+  pin,
+});
+
+export const crearUsuarioSchema = z.object({
+  nombre: z.string().trim().min(1).max(120),
+  email: z.email().max(160),
+  rol: z.enum(ROLES_USUARIO),
+  pin,
+});
+
+export const actualizarUsuarioSchema = z
+  .strictObject({
+    nombre: z.string().trim().min(1).max(120),
+    email: z.email().max(160),
+    rol: z.enum(ROLES_USUARIO),
+    activo: z.boolean(),
+    /** Blanquea el PIN. El anterior no se puede recuperar, solo reemplazar. */
+    pin,
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: 'No hay nada que actualizar' });
 
 export const ingresoSchema = z.object({
   usuarioId: z.string().min(1).max(64),

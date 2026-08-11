@@ -11,6 +11,7 @@ import { rutasEventos } from './api/rutas/eventos';
 import { rutasPlantillas } from './api/rutas/plantillas';
 import { rutasReportes } from './api/rutas/reportes';
 import { rutasStock } from './api/rutas/stock';
+import { rutasUsuarios } from './api/rutas/usuarios';
 import { rutasSesion } from './api/rutas/sesion';
 import type { Entorno } from './api/middleware';
 import { resolverCaja } from './servicios/cajas';
@@ -26,6 +27,7 @@ app.get('/api/salud', async (c) => {
 });
 
 app.route('/api', rutasSesion);
+app.route('/api', rutasUsuarios);
 app.route('/api/cajas', rutasCajas);
 app.route('/api/etiquetas', rutasEtiquetas);
 app.route('/api/eventos', rutasEventos);

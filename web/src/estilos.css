@@ -534,3 +534,178 @@ body {
   display: grid;
   place-items: center;
 }
+
+/* ---------- Formularios ---------- */
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.campo__etiqueta {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gris-texto);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0;
+}
+
+.campo__control {
+  min-height: var(--toque-min);
+  padding: 0.5rem 0.75rem;
+  font-size: 1.1rem;
+  border: 2px solid var(--gris-borde);
+  border-radius: 0.5rem;
+  background: #fff;
+  color: inherit;
+  width: 100%;
+}
+
+.campo__control:focus {
+  outline: 3px solid var(--verde);
+  outline-offset: 1px;
+}
+
+.campo__control--chico {
+  min-height: 2.5rem;
+  font-size: 0.95rem;
+  width: auto;
+}
+
+.campo__ayuda {
+  font-size: 0.85rem;
+  color: var(--gris-texto);
+  line-height: 1.4;
+}
+
+.campo__error {
+  font-size: 0.85rem;
+  color: var(--rojo);
+  font-weight: 600;
+}
+
+.campo--roles {
+  gap: 0.5rem;
+}
+
+.rol {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.7rem;
+  border: 2px solid var(--gris-borde);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  background: #fff;
+}
+
+.rol--elegido {
+  border-color: var(--verde);
+  background: var(--verde-claro);
+}
+
+.rol span {
+  display: flex;
+  flex-direction: column;
+}
+
+.rol__descripcion {
+  font-size: 0.85rem;
+  color: var(--gris-texto);
+}
+
+/* ---------- Administracion de usuarios ---------- */
+
+.tarjeta {
+  background: #fff;
+  border: 1px solid var(--gris-borde);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.tarjeta__titulo {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.aviso--ok {
+  background: var(--verde-claro);
+  border-color: var(--verde);
+  color: #115e59;
+}
+
+.cabecera__acciones {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.lista-admin {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin {
+  background: #fff;
+  border: 1px solid var(--gris-borde);
+  border-radius: 0.625rem;
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin--baja {
+  opacity: 0.6;
+}
+
+.admin__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.admin__vos {
+  font-weight: 400;
+  color: var(--gris-texto);
+}
+
+.admin__rol {
+  font-size: 0.85rem;
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.admin__estado {
+  font-size: 0.85rem;
+  color: var(--ambar);
+  font-weight: 600;
+}
+
+.admin__acciones {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.boton--chico {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+}

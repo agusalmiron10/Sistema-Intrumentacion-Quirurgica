@@ -13,6 +13,8 @@ interface Props {
   usuario: UsuarioSesion;
   conflictos: number;
   onVerConflictos: () => void;
+  /** Solo llega definido si el usuario es administrador. */
+  onVerUsuarios?: (() => void) | undefined;
   onConflictosCambiaron: () => void;
   onSalir: () => void;
   onSesionVencida: () => void;
@@ -32,6 +34,7 @@ export function Escaneo({
   usuario,
   conflictos,
   onVerConflictos,
+  onVerUsuarios,
   onConflictosCambiaron,
   onSalir,
   onSesionVencida,
@@ -192,9 +195,16 @@ export function Escaneo({
             <p className="sutil">{usuario.nombre}</p>
             <h1 className="titulo">Que estas haciendo</h1>
           </div>
-          <button type="button" className="boton boton--texto" onClick={onSalir}>
-            Salir
-          </button>
+          <div className="cabecera__acciones">
+            {onVerUsuarios && (
+              <button type="button" className="boton boton--texto" onClick={onVerUsuarios}>
+                Usuarios
+              </button>
+            )}
+            <button type="button" className="boton boton--texto" onClick={onSalir}>
+              Salir
+            </button>
+          </div>
         </header>
 
         <IndicadorSync

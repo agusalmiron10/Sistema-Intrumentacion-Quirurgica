@@ -22,6 +22,10 @@ export default defineConfig({
           // declararlo en la config del Worker haria que cada deploy pisara el
           // secreto real de produccion con el valor del archivo.
           SESION_SECRET: 'secreto-de-tests-sin-valor-fuera-de-vitest',
+          // Vacio a proposito: asi los tests ejercitan el fallback al origen
+          // del request y no se rompen cada vez que cambia el dominio del
+          // despliegue, que no tiene nada que ver con lo que estan probando.
+          DOMINIO_PUBLICO: '',
         },
       },
     })),
