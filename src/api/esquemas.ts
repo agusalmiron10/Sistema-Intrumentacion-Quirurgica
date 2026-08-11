@@ -232,6 +232,59 @@ export const cajaDeCirugiaSchema = z.object({
   usada: z.boolean().optional(),
 });
 
+// ---------------------------------------------------------------------------
+// Stock de descartables
+// ---------------------------------------------------------------------------
+
+export const crearDescartableSchema = z.object({
+  nombre: z.string().trim().min(1).max(120),
+  codigo: z
+    .string()
+    .trim()
+    .min(2)
+    .max(32)
+    .transform((c) => c.toUpperCase()),
+  unidad: z.string().trim().min(1).max(20),
+  puntoReposicion: z.number().int().min(0).max(100000).default(0),
+});
+
+export const recibirLoteSchema = z.object({
+  descartableRef: z.string().trim().min(1).max(64),
+  numeroLote: z.string().trim().min(1).max(40),
+  venceEl: fechaIso.nullish(),
+  cantidad: z.number().int().positive().max(100000),
+  recibidoEn: fechaIso.optional(),
+  motivo: z.string().trim().max(200).nullish(),
+});
+
+export const consumoSchema = z.object({
+  descartableRef: z.string().trim().min(1).max(64),
+  cantidad: z.number().int().positive().max(100000),
+  cirugiaId: z.string().min(1).max(64).nullish(),
+  ocurridoEn: fechaIso.optional(),
+  motivo: z.string().trim().max(200).nullish(),
+});
+
+export const movimientoStockSchema = z.object({
+  loteId: z.string().min(1).max(64),
+  tipo: z.enum(['devolucion', 'ajuste', 'vencido']),
+  /** En `ajuste` viaja firmado; en el resto tiene que ser positivo. */
+  cantidad: z.number().int().max(100000),
+  cirugiaId: z.string().min(1).max(64).nullish(),
+  ocurridoEn: fechaIso.optional(),
+  motivo: z.string().trim().max(200).nullish(),
+});
+
+export const filtrosStockSchema = z.object({
+  loteId: z.string().min(1).optional(),
+  cirugiaId: z.string().min(1).optional(),
+  limite: z.coerce.number().int().min(1).max(500).default(200),
+});
+
+export const alertasSchema = z.object({
+  diasAviso: z.coerce.number().int().min(1).max(365).default(60),
+});
+
 export type Evento = z.infer<typeof eventoSchema>;
 export type CrearCaja = z.infer<typeof crearCajaSchema>;
 export type ActualizarCaja = z.infer<typeof actualizarCajaSchema>;

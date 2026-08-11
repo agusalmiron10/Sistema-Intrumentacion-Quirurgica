@@ -9,6 +9,7 @@ import { rutasCiclos } from './api/rutas/ciclos';
 import { rutasCirugias } from './api/rutas/cirugias';
 import { rutasEventos } from './api/rutas/eventos';
 import { rutasPlantillas } from './api/rutas/plantillas';
+import { rutasStock } from './api/rutas/stock';
 import { rutasSesion } from './api/rutas/sesion';
 import type { Entorno } from './api/middleware';
 import { resolverCaja } from './servicios/cajas';
@@ -30,6 +31,7 @@ app.route('/api/eventos', rutasEventos);
 app.route('/api/ciclos', rutasCiclos);
 app.route('/api/plantillas', rutasPlantillas);
 app.route('/api/cirugias', rutasCirugias);
+app.route('/api/stock', rutasStock);
 app.route('/api', rutasCatalogos);
 
 function escapar(texto: string): string {

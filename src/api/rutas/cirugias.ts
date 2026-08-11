@@ -11,6 +11,7 @@ import {
   quitarCaja,
   trazabilidad,
 } from '../../servicios/cirugias';
+import { consumirPlanificadoDeCirugia } from '../../servicios/stock';
 import {
   cajaDeCirugiaSchema,
   cambiarEstadoCirugiaSchema,
@@ -99,6 +100,27 @@ rutasCirugias.post('/:id/cajas', requiereSesion, async (c) => {
       await agregarCaja(db, id, cuerpo.datos.cajaRef);
     }
     return c.json(await obtenerCirugia(db, id));
+  } catch (error) {
+    return responderError(c, error);
+  }
+});
+
+/**
+ * Descuenta del stock lo planificado para la cirugia, por FEFO.
+ *
+ * Cierra la trazabilidad del lado de los descartables: despues de esto se
+ * puede responder que numero de lote de sutura se uso en que paciente.
+ */
+rutasCirugias.post('/:id/consumir', requiereSesion, async (c) => {
+  try {
+    return c.json(
+      await consumirPlanificadoDeCirugia(
+        crearDb(c.env.DB),
+        c.get('sesion').usuarioId,
+        c.req.param('id'),
+        new Date().toISOString(),
+      ),
+    );
   } catch (error) {
     return responderError(c, error);
   }
