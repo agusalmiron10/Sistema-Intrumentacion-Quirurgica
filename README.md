@@ -22,10 +22,14 @@ Vitest sobre Miniflare.
   y pliego de etiquetas en PDF. ✅
 - **Fase 3 — Escaneo.** PWA con cámara, modo continuo, entrada manual, PIN,
   cola offline y sincronización de eventos. ✅
-- Fase 4 — Esterilización. Pendiente.
-- Fase 5 — Plantillas y cirugías. Pendiente.
-- Fase 6 — Stock FEFO. Pendiente.
-- Fase 7 — Reportes Excel. Pendiente.
+- **Fase 4 — Esterilización.** Armado de ciclos, controles, liberación,
+  cuarentena y recall automático ante control biológico no conforme. ✅
+- **Fase 5 — Plantillas y cirugías.** Preference cards versionadas, creación de
+  cirugías con resolución de plantilla y asignación de cajas. ✅
+- **Fase 6 — Stock.** Descartables por lote, consumo FEFO, alertas de
+  reposición y de vencimiento. ✅
+- **Fase 7 — Reportes.** Exportación a Excel: stock, trazabilidad por cirugía,
+  historial de una caja y productividad por ciclo. ✅
 
 ## Puesta en marcha
 
@@ -76,6 +80,11 @@ src/
   servicios/cajas.ts         CRUD y resolución por id o código
   servicios/qr.ts            Matriz del QR y SVG
   servicios/etiquetas.ts     Pliego de etiquetas en PDF
+  servicios/ciclos.ts        Ciclos, controles, liberación y recall
+  servicios/plantillas.ts    Preference cards versionadas
+  servicios/cirugias.ts      Cirugías y trazabilidad
+  servicios/stock.ts         Lotes, consumo FEFO y alertas
+  servicios/reportes.ts      Exportación a Excel
   api/esquemas.ts            Validación Zod
   api/errores.ts             Traducción de errores de D1 a respuestas HTTP
   api/rutas/                 Routers de Hono
@@ -113,6 +122,33 @@ coincidan con la tabla `transicion_valida`.
 | `GET` | `/api/cajas/:ref/qr.svg` | QR individual |
 | `POST` | `/api/etiquetas` | Pliego de etiquetas en PDF |
 | `GET` | `/c/:id` | Destino del QR impreso |
+| `GET` | `/api/ciclos` | Ciclos, filtrable por `controlBiologico` y `equipoId` |
+| `POST` | `/api/ciclos` | Arma un ciclo con las cajas escaneadas |
+| `GET` | `/api/ciclos/:ref` | Detalle con sus cajas (acepta id o número de lote) |
+| `POST` | `/api/ciclos/:ref/finalizar` | Fin del ciclo: las cajas pasan a cuarentena |
+| `POST` | `/api/ciclos/:ref/controles` | Carga de controles; el biológico no conforme dispara el recall |
+| `POST` | `/api/ciclos/:ref/liberar` | Liberación (solo supervisor) |
+| `GET` | `/api/ciclos/:ref/impacto` | Cajas y cirugías afectadas, sin escribir nada |
+| `GET` | `/api/ciclos/equipos` | Esterilizadores activos |
+| `GET` | `/api/plantillas` | Preference cards |
+| `POST` | `/api/plantillas` | Crea una versión nueva |
+| `GET` | `/api/plantillas/resolver` | Qué plantilla se aplicaría y de dónde sale |
+| `GET` | `/api/cirugias` | Listado con filtros de fecha y estado |
+| `POST` | `/api/cirugias` | Alta con la plantilla ya copiada |
+| `GET` | `/api/cirugias/:id` | Detalle con cajas y descartables planificados |
+| `POST` | `/api/cirugias/:id/estado` | Cambia el estado; `preparada` asigna las cajas |
+| `POST` | `/api/cirugias/:id/consumir` | Descuenta lo planificado por FEFO |
+| `GET` | `/api/cirugias/:id/trazabilidad` | Movimientos, ciclos y lotes consumidos |
+| `GET` | `/api/stock` | Existencias por descartable |
+| `GET` | `/api/stock/alertas` | Reposición, por vencer y vencidos |
+| `POST` | `/api/stock/lotes` | Recepción de un lote |
+| `POST` | `/api/stock/consumo` | Consumo FEFO |
+| `POST` | `/api/stock/movimientos` | Devolución, ajuste o baja |
+| `POST` | `/api/stock/descartar-vencidos` | Da de baja todo lo vencido con saldo |
+| `GET` | `/api/reportes/stock` | Excel de stock |
+| `GET` | `/api/reportes/cirugias/:id` | Excel de trazabilidad |
+| `GET` | `/api/reportes/cajas/:ref` | Excel del historial de una caja |
+| `GET` | `/api/reportes/ciclos` | Excel de productividad |
 
 `:ref` acepta el id o el código legible, indistintamente y sin importar
 mayúsculas. Las dos vías tienen que funcionar en todos lados: el QR trae el id y
@@ -292,6 +328,62 @@ el orden de aplicación sale de `ocurrido_en` y el control de vencimiento se
 compara contra ese mismo campo, así que una tablet con la fecha mal puesta
 podría colar una caja vencida como vigente.
 
+### El recall es la razón de ser del sistema
+
+Cargar un control biológico como `no_conforme` no marca nada para revisar
+después: retira el lote entero en el acto. Cada caja que se pueda retirar
+vuelve a `en_lavado` con un movimiento real, se le anula el vencimiento, y la
+respuesta trae la lista completa de cirugías afectadas — las que ya usaron una
+caja del lote y las que la tienen comprometida.
+
+Una caja que ya está `en_quirofano` no se fuerza. Forzarla por sistema no la
+saca del campo quirúrgico: se reporta y sigue su curso normal.
+
+El control biológico no se puede reescribir una vez cargado. Eso lo sostiene un
+trigger, no la API.
+
+### Las plantillas se versionan, no se editan
+
+Al crear una cirugía se resuelve la plantilla (primero la del cirujano, si no la
+genérica del procedimiento) y se **copia** a `cirugia_caja` y
+`cirugia_descartable`. La copia no es una optimización: si mañana cambia la
+preference card, el histórico tiene que seguir mostrando lo que realmente se
+preparó para ese paciente. Hay un test que lo fija.
+
+Por lo mismo, crear una versión nueva baja la anterior a `vigente = 0` pero no
+la borra: las cirugías viejas la referencian.
+
+### FEFO no es "consumir lo que vence antes" a secas
+
+Dos cosas que parecen detalles y no lo son:
+
+- **Un lote vencido nunca se consume.** FEFO significa consumir primero lo que
+  vence antes, no consumir lo vencido. Eso no se usa en un paciente, se
+  descarta. Los vencidos se cuentan aparte del disponible: sumarlos sería decir
+  que hay stock de algo que no se puede usar.
+- **En SQLite los `NULL` ordenan primero.** Sin cuidarlo, un lote sin fecha de
+  vencimiento se consumiría antes que uno que vence la semana que viene.
+
+Si no alcanza el stock no se consume nada: descontar a medias deja el stock
+movido y la cirugía igual de incompleta. El error informa cuánto hay vencido sin
+descartar, que es lo que explica por qué el número del sistema no cierra con lo
+que se ve en el estante.
+
+### Reportes
+
+`exceljs` corre dentro de workerd —hay un smoke test que lo fija— y se importa
+de forma diferida: pesa bastante y solo hace falta cuando alguien pide un
+reporte. Cargarlo en el módulo raíz encarecería el arranque de todas las rutas,
+incluidas las del escaneo, que son las que tienen que responder rápido.
+
+El historial de una caja muestra `ocurrido_en` y `registrado_en` en columnas
+separadas. La diferencia entre ambos es lo que revela que ese escaneo se hizo
+sin señal y se sincronizó después.
+
+Un test verifica que el reporte de cirugía no filtre datos clínicos: es el
+archivo que se comparte por mail y se imprime, el lugar más fácil para que se
+escape algo que el sistema no debería tener.
+
 ### Autenticación por PIN
 
 El PIN es de 4 a 6 dígitos porque se tipea con guantes y apurado: el espacio de
@@ -309,7 +401,7 @@ transacción. No hay nada que activar.
 
 ## Tests
 
-118 tests contra una D1 real sobre Miniflare. Testear triggers contra un mock no
+186 tests contra una D1 real sobre Miniflare. Testear triggers contra un mock no
 verificaría nada: lo que se está probando es el comportamiento de SQLite.
 
 Cubren: correspondencia entre la máquina de estados de la base y la del código,
@@ -318,8 +410,12 @@ eventos tardíos, idempotencia (incluido el reenvío después de que la caja
 avanzó), vencimiento y escaneos offline, control biológico para salir de
 cuarentena, inmutabilidad del log y del estado, saldos de stock y orden FEFO,
 CRUD de cajas por API, round-trip de decodificación del QR, ingreso por PIN con
-bloqueo, firma y vencimiento de los tokens, y sincronización de eventos
-(orden cronológico, idempotencia, conflictos, usuario distinto, reloj desfasado).
+bloqueo, firma y vencimiento de los tokens, sincronización de eventos (orden
+cronológico, idempotencia, conflictos, usuario distinto, reloj desfasado),
+armado y liberación de ciclos, el recall completo ante control biológico no
+conforme, versionado de plantillas, congelamiento de la plantilla en la
+cirugía, consumo FEFO con lotes vencidos y sin stock, alertas, y generación de
+los cuatro reportes de Excel verificando su contenido.
 
 Aviso: desde la v0.21 el pool de Vitest ya no aísla el storage entre tests, así
 que los datos persisten dentro de un archivo. Los helpers de `test/ayudas.ts`
