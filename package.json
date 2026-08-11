@@ -19,12 +19,16 @@
   "dependencies": {
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.1",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.21.0",
     "@types/node": "^26.2.0",
+    "@types/qrcode": "^1.5.6",
     "drizzle-kit": "^0.31.10",
+    "jsqr": "^1.4.0",
     "typescript": "^5.8.3",
     "vitest": "^4.1.0",
     "wrangler": "^4.120.1"
