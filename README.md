@@ -18,7 +18,8 @@ Vitest sobre Miniflare.
 
 - **Fase 1 — Base.** Esquema completo, migraciones, triggers de inmutabilidad y
   de máquina de estados, seed y tests. ✅
-- Fase 2 — Cajas y QR. Pendiente.
+- **Fase 2 — Cajas y QR.** CRUD de cajas y contenido esperado, generación de QR
+  y pliego de etiquetas en PDF. ✅
 - Fase 3 — Escaneo (PWA, cámara, PIN, cola offline). Pendiente.
 - Fase 4 — Esterilización. Pendiente.
 - Fase 5 — Plantillas y cirugías. Pendiente.
@@ -57,16 +58,42 @@ npx wrangler d1 create instrumentacion
 
 ```
 src/
-  dominio/estados.ts   Vocabulario y máquina de estados (definición canónica en TS)
-  db/schema.ts         Esquema Drizzle
-  db/index.ts          Cliente
-  auth/pin.ts          Derivación y verificación del PIN (PBKDF2 vía WebCrypto)
-  api/errores.ts       Traducción de abortos de trigger a respuestas HTTP
-  index.ts             Worker (Hono)
-migrations/            SQL aplicado por `wrangler d1 migrations apply`
-seed/seed.sql          Datos de prueba realistas
-test/                  Vitest contra una D1 real sobre Miniflare
+  dominio/estados.ts         Vocabulario y máquina de estados (definición canónica en TS)
+  dominio/identificadores.ts Id corto de caja, normalización de código, URL del QR
+  db/schema.ts               Esquema Drizzle
+  db/index.ts                Cliente
+  auth/pin.ts                Derivación y verificación del PIN (PBKDF2 vía WebCrypto)
+  servicios/cajas.ts         CRUD y resolución por id o código
+  servicios/qr.ts            Matriz del QR y SVG
+  servicios/etiquetas.ts     Pliego de etiquetas en PDF
+  api/esquemas.ts            Validación Zod
+  api/errores.ts             Traducción de errores de D1 a respuestas HTTP
+  api/rutas/                 Routers de Hono
+  index.ts                   Worker
+migrations/                  SQL aplicado por `wrangler d1 migrations apply`
+seed/seed.sql                Datos de prueba realistas
+test/                        Vitest contra una D1 real sobre Miniflare
 ```
+
+## Endpoints
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| `GET` | `/api/salud` | Diagnóstico |
+| `GET` | `/api/cajas` | Listado con filtros `estado`, `servicio`, `q`, `activa` |
+| `POST` | `/api/cajas` | Alta, opcionalmente con contenido esperado |
+| `GET` | `/api/cajas/:ref` | Detalle con contenido |
+| `PATCH` | `/api/cajas/:ref` | Edita datos administrativos (nunca el estado) |
+| `GET` | `/api/cajas/:ref/historial` | Movimientos de la caja |
+| `GET` | `/api/cajas/:ref/contenido` | Contenido esperado |
+| `PUT` | `/api/cajas/:ref/contenido` | Reemplaza el contenido esperado |
+| `GET` | `/api/cajas/:ref/qr.svg` | QR individual |
+| `POST` | `/api/etiquetas` | Pliego de etiquetas en PDF |
+| `GET` | `/c/:id` | Destino del QR impreso |
+
+`:ref` acepta el id o el código legible, indistintamente y sin importar
+mayúsculas. Las dos vías tienen que funcionar en todos lados: el QR trae el id y
+la entrada manual —la etiqueta rayada, que es el caso común— trae el código.
 
 ### Numeración de migraciones
 
@@ -157,6 +184,42 @@ Cinco, todos acordados antes de escribir el esquema:
    congelarse al crear una cirugía. Sin ella no se podía comparar planificado
    contra consumido ni reconstruir el histórico si la plantilla cambiaba.
 
+### La longitud de la URL define si el QR se puede leer
+
+El QR lleva una URL (`https://{dominio}/c/{caja_id}`), nunca datos embebidos: si
+cambia algo, no se reimprimen 200 etiquetas. Pero la longitud de esa URL decide
+la densidad del código, y ahí hay un límite físico:
+
+| URL | módulos | módulo a 20mm | a 25mm |
+|---|---|---|---|
+| dominio largo + UUID | 49×49 | 0,41mm | 0,51mm |
+| dominio largo + id corto | 41×41 | 0,49mm | 0,61mm |
+| dominio corto + id corto | 33×33 | 0,61mm | 0,76mm |
+
+Con un UUID y una etiqueta de 2cm el módulo queda en 0,41mm, por debajo del piso
+práctico (~0,5mm) para lectura con cámara de celular — y con la etiqueta rayada,
+que es el caso real, falla.
+
+Por eso el id de caja es de 10 caracteres Crockford base32 (~2⁵⁰), opaco e
+inmutable, y el lado por defecto del QR es 25mm en vez del mínimo de 20mm.
+`DOMINIO_PUBLICO` conviene que sea corto: cada carácter de más engorda el código.
+
+**Esa variable tiene que estar definida antes de imprimir el primer pliego.** Si
+no está, se deduce del request, y un pliego generado desde una URL de preview
+queda impreso con esa URL para siempre.
+
+### El QR se dibuja como vectores, no como imagen
+
+La matriz de módulos se pinta como rectángulos en el PDF, agrupando los módulos
+contiguos de cada fila en una sola franja. Sale nítido a cualquier resolución de
+impresora, no hace falta un canvas (que en Workers no existe) y el archivo pesa
+poco: 8 etiquetas son 20KB.
+
+Hay un test que decodifica el QR generado —rasterizado desde las mismas franjas
+que dibuja el PDF— y verifica que vuelva exactamente a la URL de la caja. Es la
+única forma de saber que el agrupado y la inversión de filas están bien; si
+alguna de las dos se rompe, el código impreso deja de leerse.
+
 ### Autenticación por PIN
 
 El PIN es de 4 a 6 dígitos porque se tipea con guantes y apurado: el espacio de
@@ -174,14 +237,15 @@ transacción. No hay nada que activar.
 
 ## Tests
 
-43 tests contra una D1 real sobre Miniflare. Testear triggers contra un mock no
+83 tests contra una D1 real sobre Miniflare. Testear triggers contra un mock no
 verificaría nada: lo que se está probando es el comportamiento de SQLite.
 
 Cubren: correspondencia entre la máquina de estados de la base y la del código,
 el ciclo completo de una caja, transiciones ilegales, conflicto de estado por
 eventos tardíos, idempotencia (incluido el reenvío después de que la caja
 avanzó), vencimiento y escaneos offline, control biológico para salir de
-cuarentena, inmutabilidad del log y del estado, saldos de stock y orden FEFO.
+cuarentena, inmutabilidad del log y del estado, saldos de stock y orden FEFO,
+CRUD de cajas por API, y round-trip de decodificación del QR.
 
 Aviso: desde la v0.21 el pool de Vitest ya no aísla el storage entre tests, así
 que los datos persisten dentro de un archivo. Los helpers de `test/ayudas.ts`
