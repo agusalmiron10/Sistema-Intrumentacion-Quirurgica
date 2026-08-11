@@ -3,6 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2025-06-01"
 compatibility_flags = ["nodejs_compat"]
 
+[vars]
+# Dominio que se imprime adentro de cada QR. Tiene que ser el definitivo antes
+# de imprimir el primer pliego: cambiarlo obliga a reimprimir las etiquetas.
+# Cuanto mas corto, menos denso el QR y mejor lee una etiqueta gastada.
+DOMINIO_PUBLICO = ""
+
 [[d1_databases]]
 binding = "DB"
 database_name = "instrumentacion"

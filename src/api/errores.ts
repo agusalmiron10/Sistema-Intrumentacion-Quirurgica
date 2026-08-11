@@ -60,3 +60,49 @@ export function interpretarErrorDeTrigger(error: unknown): ErrorDominio | null {
   }
   return null;
 }
+
+export interface ErrorApi {
+  codigo: string;
+  mensaje: string;
+  estadoHttp: 409 | 422 | 403;
+}
+
+/**
+ * Interpreta cualquier error de D1 que sea culpa del pedido y no del sistema:
+ * abortos de trigger, claves duplicadas y referencias inexistentes.
+ * Devuelve null si el error es otra cosa, que debe salir como 500.
+ */
+export function interpretarErrorD1(error: unknown): ErrorApi | null {
+  const deTrigger = interpretarErrorDeTrigger(error);
+  if (deTrigger) return deTrigger;
+
+  const texto = error instanceof Error ? error.message : String(error);
+
+  if (texto.includes('UNIQUE constraint failed')) {
+    const columna = /UNIQUE constraint failed: ([\w.,\s]+)/.exec(texto)?.[1]?.trim();
+    return {
+      codigo: 'duplicado',
+      mensaje: columna ? `Ya existe un registro con ese valor en ${columna}` : 'Valor duplicado',
+      estadoHttp: 409,
+    };
+  }
+
+  if (texto.includes('FOREIGN KEY constraint failed')) {
+    return {
+      codigo: 'referencia_inexistente',
+      mensaje: 'Alguno de los registros referenciados no existe',
+      estadoHttp: 422,
+    };
+  }
+
+  if (texto.includes('CHECK constraint failed')) {
+    const nombre = /CHECK constraint failed: (\w+)/.exec(texto)?.[1];
+    return {
+      codigo: 'check_invalido',
+      mensaje: nombre ? `No se cumple la restriccion ${nombre}` : 'Valor fuera de lo permitido',
+      estadoHttp: 422,
+    };
+  }
+
+  return null;
+}
