@@ -22,6 +22,7 @@ const TECLAS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'borrar', '0', 'ok'
  */
 export function Ingreso({ onIngreso }: Props) {
   const [usuarios, setUsuarios] = useState<UsuarioSesion[]>([]);
+  const [cargando, setCargando] = useState(true);
   const [elegido, setElegido] = useState<UsuarioSesion | null>(null);
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +40,11 @@ export function Ingreso({ onIngreso }: Props) {
         const guardados = await leerMeta<UsuarioSesion[]>('usuarios');
         if (guardados) setUsuarios(guardados);
         setError('Sin conexion: hace falta señal para ingresar.');
+      } finally {
+        // Sin esto, una lista vacia se ve igual que una que todavia no llego:
+        // la pantalla queda diciendo "cargando" para siempre y nadie entiende
+        // que el sistema no tiene usuarios dados de alta.
+        setCargando(false);
       }
     })();
   }, []);
@@ -112,7 +118,20 @@ export function Ingreso({ onIngreso }: Props) {
             </li>
           ))}
         </ul>
-        {usuarios.length === 0 && !error && <p className="sutil">Cargando usuarios...</p>}
+        {cargando && <p className="sutil">Cargando usuarios...</p>}
+
+        {!cargando && usuarios.length === 0 && !error && (
+          <div className="aviso aviso--atencion">
+            <strong>Todavia no hay usuarios cargados</strong>
+            <p>
+              El sistema esta funcionando, pero nadie puede entrar hasta que se den de alta las
+              personas que lo van a usar.
+            </p>
+            <p className="aviso__nota">
+              Se cargan desde la administracion del sistema, con un PIN por persona.
+            </p>
+          </div>
+        )}
       </main>
     );
   }
