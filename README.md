@@ -20,7 +20,8 @@ Vitest sobre Miniflare.
   de máquina de estados, seed y tests. ✅
 - **Fase 2 — Cajas y QR.** CRUD de cajas y contenido esperado, generación de QR
   y pliego de etiquetas en PDF. ✅
-- Fase 3 — Escaneo (PWA, cámara, PIN, cola offline). Pendiente.
+- **Fase 3 — Escaneo.** PWA con cámara, modo continuo, entrada manual, PIN,
+  cola offline y sincronización de eventos. ✅
 - Fase 4 — Esterilización. Pendiente.
 - Fase 5 — Plantillas y cirugías. Pendiente.
 - Fase 6 — Stock FEFO. Pendiente.
@@ -42,6 +43,15 @@ seed. Después:
 ```bash
 npm run dev
 ```
+
+Eso levanta el Worker con la PWA ya compilada en `http://localhost:8787`. Para
+trabajar sobre el frontend con recarga en caliente, en otra terminal:
+
+```bash
+npm run dev:web
+```
+
+PINs de desarrollo: Marcela `1234`, Silvia `2345`, Roberto `3456`, admin `9999`.
 
 ```bash
 npm test
@@ -73,13 +83,26 @@ src/
 migrations/                  SQL aplicado por `wrangler d1 migrations apply`
 seed/seed.sql                Datos de prueba realistas
 test/                        Vitest contra una D1 real sobre Miniflare
+web/                         PWA (React + Vite), servida por el mismo Worker
+  src/lib/almacen.ts         IndexedDB: cola, catálogo de cajas y conflictos
+  src/lib/cola.ts            Encolado y sincronización
+  src/lib/cajas.ts           Catálogo local y validación de transiciones
+  src/pantallas/             Ingreso, Escaneo y Conflictos
 ```
+
+`web/` importa `src/dominio/estados.ts` directamente: la máquina de estados del
+cliente y la del servidor son el mismo archivo, y un test verifica que además
+coincidan con la tabla `transicion_valida`.
 
 ## Endpoints
 
 | Método | Ruta | Qué hace |
 |---|---|---|
 | `GET` | `/api/salud` | Diagnóstico |
+| `GET` | `/api/usuarios` | Lista para la pantalla de ingreso (sin email ni hash) |
+| `POST` | `/api/sesion` | Ingreso por PIN, devuelve el token |
+| `GET` | `/api/sesion` | Verifica el token guardado |
+| `POST` | `/api/eventos` | Sincroniza un lote de escaneos |
 | `GET` | `/api/cajas` | Listado con filtros `estado`, `servicio`, `q`, `activa` |
 | `POST` | `/api/cajas` | Alta, opcionalmente con contenido esperado |
 | `GET` | `/api/cajas/:ref` | Detalle con contenido |
@@ -220,6 +243,55 @@ que dibuja el PDF— y verifica que vuelva exactamente a la URL de la caja. Es l
 única forma de saber que el agrupado y la inversión de filas están bien; si
 alguna de las dos se rompe, el código impreso deja de leerse.
 
+### La PWA y la API van en el mismo origen
+
+El pliego original decía Cloudflare Pages para el frontend. Va servido por el
+mismo Worker, con `[assets]`, por una razón concreta: con Pages la PWA y la API
+quedan en orígenes distintos, y eso obliga a resolver CORS y a manejar la sesión
+con cookies cross-site — justo el tipo de cosa que falla en un navegador de
+hospital con la configuración restringida. Mismo origen elimina el problema y
+deja un solo deploy.
+
+Un archivo inexistente devuelve 404 de verdad, no el `index.html`. Devolver el
+index a un pedido de `/assets/algo.js` hace que el navegador reciba HTML donde
+espera JavaScript, y el error que muestra no se parece en nada al problema real.
+Pasa al desplegar una versión nueva mientras alguien tiene la app abierta: la
+pestaña vieja sigue pidiendo los chunks anteriores.
+
+### Offline: qué se guarda y por qué
+
+En IndexedDB viven tres cosas:
+
+- **La cola de escaneos sin sincronizar.** Un escaneo encolado es trabajo que la
+  usuaria ya hizo; tiene que sobrevivir a que se recargue la página o se apague
+  la tablet.
+- **El catálogo de cajas.** Sin él no hay modo offline de verdad: para armar un
+  evento hace falta saber de qué estado sale la caja, y eso no se adivina. Si se
+  escanea una caja que no está en el catálogo local y no hay señal, se avisa en
+  vez de encolar un evento mal construido.
+- **Los conflictos.** Un escaneo rechazado no se descarta en silencio: alguien
+  movió una caja de verdad y el sistema no lo registró.
+
+El estado local se adelanta de forma optimista al encolar, para poder encadenar
+escaneos sin señal (`en_lavado` y después `en_armado` sobre la misma caja). Al
+sincronizar se reemplaza por lo que confirmó el servidor.
+
+### Cada evento sabe quién lo hizo
+
+El `usuarioId` viaja dentro del evento y no se deduce de la sesión. La cola
+puede sincronizarse horas después, cuando en la tablet ya ingresó otra persona;
+si se tomara el usuario de la sesión, esos escaneos quedarían a nombre de quien
+no los hizo. El servidor rechaza con `usuario_distinto` los eventos que no
+coinciden con la sesión, y el cliente los deja en la cola esperando a su dueño.
+Cerrar sesión con la cola llena avisa antes.
+
+### Relojes desfasados
+
+Un evento con fecha futura se rechaza con `reloj_desfasado`. No es una rareza:
+el orden de aplicación sale de `ocurrido_en` y el control de vencimiento se
+compara contra ese mismo campo, así que una tablet con la fecha mal puesta
+podría colar una caja vencida como vigente.
+
 ### Autenticación por PIN
 
 El PIN es de 4 a 6 dígitos porque se tipea con guantes y apurado: el espacio de
@@ -237,7 +309,7 @@ transacción. No hay nada que activar.
 
 ## Tests
 
-83 tests contra una D1 real sobre Miniflare. Testear triggers contra un mock no
+118 tests contra una D1 real sobre Miniflare. Testear triggers contra un mock no
 verificaría nada: lo que se está probando es el comportamiento de SQLite.
 
 Cubren: correspondencia entre la máquina de estados de la base y la del código,
@@ -245,7 +317,9 @@ el ciclo completo de una caja, transiciones ilegales, conflicto de estado por
 eventos tardíos, idempotencia (incluido el reenvío después de que la caja
 avanzó), vencimiento y escaneos offline, control biológico para salir de
 cuarentena, inmutabilidad del log y del estado, saldos de stock y orden FEFO,
-CRUD de cajas por API, y round-trip de decodificación del QR.
+CRUD de cajas por API, round-trip de decodificación del QR, ingreso por PIN con
+bloqueo, firma y vencimiento de los tokens, y sincronización de eventos
+(orden cronológico, idempotencia, conflictos, usuario distinto, reloj desfasado).
 
 Aviso: desde la v0.21 el pool de Vitest ya no aísla el storage entre tests, así
 que los datos persisten dentro de un archivo. Los helpers de `test/ayudas.ts`
