@@ -4,9 +4,12 @@ import { sql } from 'drizzle-orm';
 import { crearDb, schema } from './db';
 import { rutasCajas } from './api/rutas/cajas';
 import { rutasEtiquetas } from './api/rutas/etiquetas';
+import { rutasEventos } from './api/rutas/eventos';
+import { rutasSesion } from './api/rutas/sesion';
+import type { Entorno } from './api/middleware';
 import { resolverCaja } from './servicios/cajas';
 
-const app = new Hono<{ Bindings: Cloudflare.Env }>();
+const app = new Hono<Entorno>();
 
 app.get('/api/salud', async (c) => {
   const db = crearDb(c.env.DB);
@@ -16,8 +19,10 @@ app.get('/api/salud', async (c) => {
   return c.json({ ok: true, transicionesCargadas: fila?.total ?? 0 });
 });
 
+app.route('/api', rutasSesion);
 app.route('/api/cajas', rutasCajas);
 app.route('/api/etiquetas', rutasEtiquetas);
+app.route('/api/eventos', rutasEventos);
 
 function escapar(texto: string): string {
   return texto.replace(
@@ -71,6 +76,40 @@ app.get('/c/:id', async (c) => {
        .join('')}
      </table>`,
   );
+});
+
+/**
+ * La PWA y la API viven en el mismo origen: los assets estaticos los sirve el
+ * mismo Worker. Asi no hay CORS ni cookies cross-site, que es exactamente el
+ * tipo de cosa que despues falla en un navegador de hospital con la
+ * configuracion restringida.
+ *
+ * Los archivos que existen los resuelve la capa de assets antes de llegar aca.
+ * Lo que cae en este notFound es o una ruta de la API que no existe, o una
+ * ruta del router del frontend, que se resuelve devolviendo el index.
+ */
+app.notFound(async (c) => {
+  const ruta = new URL(c.req.url).pathname;
+
+  if (ruta.startsWith('/api/')) {
+    return c.json({ error: 'no_encontrado', mensaje: 'Esa ruta de la API no existe' }, 404);
+  }
+
+  // Un archivo que no existe tiene que dar 404 de verdad. Devolverle el index
+  // a un pedido de /assets/algo.js hace que el navegador reciba HTML donde
+  // espera JavaScript, y el error que muestra ("MIME type text/html") no se
+  // parece en nada al problema real. Pasa de verdad: al desplegar una version
+  // nueva, una pestania abierta sigue pidiendo los chunks viejos.
+  const ultimoTramo = ruta.slice(ruta.lastIndexOf('/') + 1);
+  if (ultimoTramo.includes('.')) {
+    return c.text('No encontrado', 404);
+  }
+
+  const index = await c.env.ASSETS.fetch(new URL('/index.html', c.req.url));
+  return new Response(index.body, {
+    status: index.status === 200 ? 200 : 404,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
 });
 
 export default app;

@@ -6,3 +6,5 @@ dist/
 .DS_Store
 .claude/settings.local.json
 etiquetas-muestra.pdf
+web/dist/
+dev.vars

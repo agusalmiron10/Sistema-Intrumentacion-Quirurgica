@@ -40,3 +40,25 @@ export function normalizarCodigo(texto: string): string {
 export function urlDeCaja(dominio: string, cajaId: string): string {
   return `${dominio.replace(/\/+$/, '')}/c/${cajaId}`;
 }
+
+/**
+ * Saca la referencia de caja de lo que sea que haya entrado: la URL de un QR,
+ * un codigo tipeado a mano o lo que escupio la pistola lectora USB.
+ *
+ * Acepta el dominio que sea, no solo el propio: una etiqueta impresa hace dos
+ * anios con el dominio viejo tiene que seguir sirviendo. Lo que importa es el
+ * id, y el id no cambia.
+ */
+export function refDesdeTexto(texto: string): string {
+  const limpio = texto.trim();
+  if (!limpio) return '';
+
+  const enUrl = /^https?:\/\/[^\s/]+\/c\/([^/?#\s]+)/i.exec(limpio);
+  if (enUrl?.[1]) return decodeURIComponent(enUrl[1]);
+
+  // Tambien se acepta pegar solo la parte final, tipo "/c/K7Q2M9XB4T".
+  const relativa = /^\/c\/([^/?#\s]+)/.exec(limpio);
+  if (relativa?.[1]) return decodeURIComponent(relativa[1]);
+
+  return limpio;
+}

@@ -8,6 +8,15 @@ compatibility_flags = ["nodejs_compat"]
 # de imprimir el primer pliego: cambiarlo obliga a reimprimir las etiquetas.
 # Cuanto mas corto, menos denso el QR y mejor lee una etiqueta gastada.
 DOMINIO_PUBLICO = ""
+# Firma de los tokens de sesion. En produccion se pisa con un secreto real:
+#   npx wrangler secret put SESION_SECRET
+SESION_SECRET = "desarrollo-inseguro-cambiar-en-produccion"
+
+# La PWA se sirve desde el mismo Worker que la API: mismo origen, sin CORS ni
+# cookies cross-site, y un solo deploy.
+[assets]
+directory = "web/dist"
+binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
