@@ -1,0 +1,1905 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "18d007d8-b952-49fc-a9c2-b2f00f81ffd3",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "caja": {
+      "name": "caja",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "servicio": {
+          "name": "servicio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'esteril_deposito'"
+        },
+        "ubicacion": {
+          "name": "ubicacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "vence_el": {
+          "name": "vence_el",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ciclos_totales": {
+          "name": "ciclos_totales",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "activa": {
+          "name": "activa",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"
+        }
+      },
+      "indexes": {
+        "caja_codigo_uq": {
+          "name": "caja_codigo_uq",
+          "columns": [
+            "codigo"
+          ],
+          "isUnique": true
+        },
+        "caja_estado_idx": {
+          "name": "caja_estado_idx",
+          "columns": [
+            "estado"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "caja_estado_ck": {
+          "name": "caja_estado_ck",
+          "value": "\"estado\" in ('esteril_deposito', 'asignada', 'en_quirofano', 'usada_sucia', 'en_lavado', 'en_armado', 'en_esterilizacion', 'en_cuarentena', 'en_reparacion', 'baja')"
+        },
+        "caja_activa_ck": {
+          "name": "caja_activa_ck",
+          "value": "\"activa\" in (0, 1)"
+        },
+        "caja_ciclos_ck": {
+          "name": "caja_ciclos_ck",
+          "value": "\"ciclos_totales\" >= 0"
+        }
+      }
+    },
+    "caja_contenido": {
+      "name": "caja_contenido",
+      "columns": {
+        "caja_id": {
+          "name": "caja_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "instrumento_tipo_id": {
+          "name": "instrumento_tipo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cantidad": {
+          "name": "cantidad",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "caja_contenido_caja_id_caja_id_fk": {
+          "name": "caja_contenido_caja_id_caja_id_fk",
+          "tableFrom": "caja_contenido",
+          "tableTo": "caja",
+          "columnsFrom": [
+            "caja_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "caja_contenido_instrumento_tipo_id_instrumento_tipo_id_fk": {
+          "name": "caja_contenido_instrumento_tipo_id_instrumento_tipo_id_fk",
+          "tableFrom": "caja_contenido",
+          "tableTo": "instrumento_tipo",
+          "columnsFrom": [
+            "instrumento_tipo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "caja_contenido_caja_id_instrumento_tipo_id_pk": {
+          "columns": [
+            "caja_id",
+            "instrumento_tipo_id"
+          ],
+          "name": "caja_contenido_caja_id_instrumento_tipo_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "caja_contenido_cantidad_ck": {
+          "name": "caja_contenido_cantidad_ck",
+          "value": "\"cantidad\" > 0"
+        }
+      }
+    },
+    "ciclo_caja": {
+      "name": "ciclo_caja",
+      "columns": {
+        "ciclo_id": {
+          "name": "ciclo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "caja_id": {
+          "name": "caja_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vence_el": {
+          "name": "vence_el",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ciclo_caja_caja_idx": {
+          "name": "ciclo_caja_caja_idx",
+          "columns": [
+            "caja_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "ciclo_caja_ciclo_id_ciclo_esterilizacion_id_fk": {
+          "name": "ciclo_caja_ciclo_id_ciclo_esterilizacion_id_fk",
+          "tableFrom": "ciclo_caja",
+          "tableTo": "ciclo_esterilizacion",
+          "columnsFrom": [
+            "ciclo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ciclo_caja_caja_id_caja_id_fk": {
+          "name": "ciclo_caja_caja_id_caja_id_fk",
+          "tableFrom": "ciclo_caja",
+          "tableTo": "caja",
+          "columnsFrom": [
+            "caja_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ciclo_caja_ciclo_id_caja_id_pk": {
+          "columns": [
+            "ciclo_id",
+            "caja_id"
+          ],
+          "name": "ciclo_caja_ciclo_id_caja_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "ciclo_esterilizacion": {
+      "name": "ciclo_esterilizacion",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "numero_lote": {
+          "name": "numero_lote",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "equipo_id": {
+          "name": "equipo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "metodo": {
+          "name": "metodo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "iniciado_en": {
+          "name": "iniciado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "finalizado_en": {
+          "name": "finalizado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "temperatura_c": {
+          "name": "temperatura_c",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tiempo_min": {
+          "name": "tiempo_min",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "control_fisico": {
+          "name": "control_fisico",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pendiente'"
+        },
+        "control_quimico": {
+          "name": "control_quimico",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pendiente'"
+        },
+        "control_biologico": {
+          "name": "control_biologico",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pendiente'"
+        },
+        "operador_id": {
+          "name": "operador_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "liberado_por": {
+          "name": "liberado_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "liberado_en": {
+          "name": "liberado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "observacion": {
+          "name": "observacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ciclo_numero_lote_uq": {
+          "name": "ciclo_numero_lote_uq",
+          "columns": [
+            "numero_lote"
+          ],
+          "isUnique": true
+        },
+        "ciclo_control_biologico_idx": {
+          "name": "ciclo_control_biologico_idx",
+          "columns": [
+            "control_biologico"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "ciclo_esterilizacion_equipo_id_equipo_esterilizador_id_fk": {
+          "name": "ciclo_esterilizacion_equipo_id_equipo_esterilizador_id_fk",
+          "tableFrom": "ciclo_esterilizacion",
+          "tableTo": "equipo_esterilizador",
+          "columnsFrom": [
+            "equipo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "ciclo_esterilizacion_operador_id_usuario_id_fk": {
+          "name": "ciclo_esterilizacion_operador_id_usuario_id_fk",
+          "tableFrom": "ciclo_esterilizacion",
+          "tableTo": "usuario",
+          "columnsFrom": [
+            "operador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "ciclo_esterilizacion_liberado_por_usuario_id_fk": {
+          "name": "ciclo_esterilizacion_liberado_por_usuario_id_fk",
+          "tableFrom": "ciclo_esterilizacion",
+          "tableTo": "usuario",
+          "columnsFrom": [
+            "liberado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "ciclo_metodo_ck": {
+          "name": "ciclo_metodo_ck",
+          "value": "\"metodo\" in ('vapor_134', 'vapor_121', 'oxido_etileno', 'peroxido_plasma')"
+        },
+        "ciclo_ctrl_fisico_ck": {
+          "name": "ciclo_ctrl_fisico_ck",
+          "value": "\"control_fisico\" in ('pendiente', 'conforme', 'no_conforme')"
+        },
+        "ciclo_ctrl_quimico_ck": {
+          "name": "ciclo_ctrl_quimico_ck",
+          "value": "\"control_quimico\" in ('pendiente', 'conforme', 'no_conforme')"
+        },
+        "ciclo_ctrl_biologico_ck": {
+          "name": "ciclo_ctrl_biologico_ck",
+          "value": "\"control_biologico\" in ('pendiente', 'conforme', 'no_conforme')"
+        }
+      }
+    },
+    "cirugia": {
+      "name": "cirugia",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "paciente_ref": {
+          "name": "paciente_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "procedimiento_id": {
+          "name": "procedimiento_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cirujano_id": {
+          "name": "cirujano_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "instrumentadora_id": {
+          "name": "instrumentadora_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "plantilla_id": {
+          "name": "plantilla_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "quirofano": {
+          "name": "quirofano",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "programada_para": {
+          "name": "programada_para",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'programada'"
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"
+        }
+      },
+      "indexes": {
+        "cirugia_programada_idx": {
+          "name": "cirugia_programada_idx",
+          "columns": [
+            "programada_para"
+          ],
+          "isUnique": false
+        },
+        "cirugia_paciente_idx": {
+          "name": "cirugia_paciente_idx",
+          "columns": [
+            "paciente_ref"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "cirugia_procedimiento_id_procedimiento_id_fk": {
+          "name": "cirugia_procedimiento_id_procedimiento_id_fk",
+          "tableFrom": "cirugia",
+          "tableTo": "procedimiento",
+          "columnsFrom": [
+            "procedimiento_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cirugia_cirujano_id_cirujano_id_fk": {
+          "name": "cirugia_cirujano_id_cirujano_id_fk",
+          "tableFrom": "cirugia",
+          "tableTo": "cirujano",
+          "columnsFrom": [
+            "cirujano_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cirugia_instrumentadora_id_usuario_id_fk": {
+          "name": "cirugia_instrumentadora_id_usuario_id_fk",
+          "tableFrom": "cirugia",
+          "tableTo": "usuario",
+          "columnsFrom": [
+            "instrumentadora_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cirugia_plantilla_id_plantilla_id_fk": {
+          "name": "cirugia_plantilla_id_plantilla_id_fk",
+          "tableFrom": "cirugia",
+          "tableTo": "plantilla",
+          "columnsFrom": [
+            "plantilla_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "cirugia_estado_ck": {
+          "name": "cirugia_estado_ck",
+          "value": "\"estado\" in ('programada', 'preparada', 'en_curso', 'finalizada', 'suspendida')"
+        }
+      }
+    },
+    "cirugia_caja": {
+      "name": "cirugia_caja",
+      "columns": {
+        "cirugia_id": {
+          "name": "cirugia_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "caja_id": {
+          "name": "caja_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "usada": {
+          "name": "usada",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "cirugia_caja_caja_idx": {
+          "name": "cirugia_caja_caja_idx",
+          "columns": [
+            "caja_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "cirugia_caja_cirugia_id_cirugia_id_fk": {
+          "name": "cirugia_caja_cirugia_id_cirugia_id_fk",
+          "tableFrom": "cirugia_caja",
+          "tableTo": "cirugia",
+          "columnsFrom": [
+            "cirugia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "cirugia_caja_caja_id_caja_id_fk": {
+          "name": "cirugia_caja_caja_id_caja_id_fk",
+          "tableFrom": "cirugia_caja",
+          "tableTo": "caja",
+          "columnsFrom": [
+            "caja_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cirugia_caja_cirugia_id_caja_id_pk": {
+          "columns": [
+            "cirugia_id",
+            "caja_id"
+          ],
+          "name": "cirugia_caja_cirugia_id_caja_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "cirugia_caja_usada_ck": {
+          "name": "cirugia_caja_usada_ck",
+          "value": "\"usada\" in (0, 1)"
+        }
+      }
+    },
+    "cirugia_descartable": {
+      "name": "cirugia_descartable",
+      "columns": {
+        "cirugia_id": {
+          "name": "cirugia_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "descartable_id": {
+          "name": "descartable_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cantidad_planificada": {
+          "name": "cantidad_planificada",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cirugia_descartable_cirugia_id_cirugia_id_fk": {
+          "name": "cirugia_descartable_cirugia_id_cirugia_id_fk",
+          "tableFrom": "cirugia_descartable",
+          "tableTo": "cirugia",
+          "columnsFrom": [
+            "cirugia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "cirugia_descartable_descartable_id_descartable_id_fk": {
+          "name": "cirugia_descartable_descartable_id_descartable_id_fk",
+          "tableFrom": "cirugia_descartable",
+          "tableTo": "descartable",
+          "columnsFrom": [
+            "descartable_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cirugia_descartable_cirugia_id_descartable_id_pk": {
+          "columns": [
+            "cirugia_id",
+            "descartable_id"
+          ],
+          "name": "cirugia_descartable_cirugia_id_descartable_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "cirugia_descartable_cantidad_ck": {
+          "name": "cirugia_descartable_cantidad_ck",
+          "value": "\"cantidad_planificada\" > 0"
+        }
+      }
+    },
+    "cirujano": {
+      "name": "cirujano",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "matricula": {
+          "name": "matricula",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "especialidad": {
+          "name": "especialidad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "cirujano_matricula_uq": {
+          "name": "cirujano_matricula_uq",
+          "columns": [
+            "matricula"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "cirujano_activo_ck": {
+          "name": "cirujano_activo_ck",
+          "value": "\"activo\" in (0, 1)"
+        }
+      }
+    },
+    "descartable": {
+      "name": "descartable",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "unidad": {
+          "name": "unidad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "punto_reposicion": {
+          "name": "punto_reposicion",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "activo": {
+          "name": "activo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "descartable_codigo_uq": {
+          "name": "descartable_codigo_uq",
+          "columns": [
+            "codigo"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "descartable_activo_ck": {
+          "name": "descartable_activo_ck",
+          "value": "\"activo\" in (0, 1)"
+        }
+      }
+    },
+    "equipo_esterilizador": {
+      "name": "equipo_esterilizador",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "marca": {
+          "name": "marca",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ultima_validacion": {
+          "name": "ultima_validacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "equipo_activo_ck": {
+          "name": "equipo_activo_ck",
+          "value": "\"activo\" in (0, 1)"
+        }
+      }
+    },
+    "instrumento_tipo": {
+      "name": "instrumento_tipo",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fabricante": {
+          "name": "fabricante",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "termosensible": {
+          "name": "termosensible",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "activo": {
+          "name": "activo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "instrumento_tipo_codigo_uq": {
+          "name": "instrumento_tipo_codigo_uq",
+          "columns": [
+            "codigo"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "instrumento_tipo_termosensible_ck": {
+          "name": "instrumento_tipo_termosensible_ck",
+          "value": "\"termosensible\" in (0, 1)"
+        },
+        "instrumento_tipo_activo_ck": {
+          "name": "instrumento_tipo_activo_ck",
+          "value": "\"activo\" in (0, 1)"
+        }
+      }
+    },
+    "lote_descartable": {
+      "name": "lote_descartable",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "descartable_id": {
+          "name": "descartable_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "numero_lote": {
+          "name": "numero_lote",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vence_el": {
+          "name": "vence_el",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cantidad_inicial": {
+          "name": "cantidad_inicial",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "cantidad_actual": {
+          "name": "cantidad_actual",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "recibido_en": {
+          "name": "recibido_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"
+        }
+      },
+      "indexes": {
+        "lote_descartable_uq": {
+          "name": "lote_descartable_uq",
+          "columns": [
+            "descartable_id",
+            "numero_lote"
+          ],
+          "isUnique": true
+        },
+        "lote_fefo_idx": {
+          "name": "lote_fefo_idx",
+          "columns": [
+            "descartable_id",
+            "vence_el"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lote_descartable_descartable_id_descartable_id_fk": {
+          "name": "lote_descartable_descartable_id_descartable_id_fk",
+          "tableFrom": "lote_descartable",
+          "tableTo": "descartable",
+          "columnsFrom": [
+            "descartable_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lote_cantidad_actual_ck": {
+          "name": "lote_cantidad_actual_ck",
+          "value": "\"cantidad_actual\" >= 0"
+        },
+        "lote_cantidad_inicial_ck": {
+          "name": "lote_cantidad_inicial_ck",
+          "value": "\"cantidad_inicial\" >= 0"
+        }
+      }
+    },
+    "movimiento_caja": {
+      "name": "movimiento_caja",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "caja_id": {
+          "name": "caja_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado_desde": {
+          "name": "estado_desde",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado_hasta": {
+          "name": "estado_hasta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cirugia_id": {
+          "name": "cirugia_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ciclo_id": {
+          "name": "ciclo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ocurrido_en": {
+          "name": "ocurrido_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "registrado_en": {
+          "name": "registrado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"
+        },
+        "observacion": {
+          "name": "observacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "movimiento_caja_caja_idx": {
+          "name": "movimiento_caja_caja_idx",
+          "columns": [
+            "caja_id",
+            "ocurrido_en"
+          ],
+          "isUnique": false
+        },
+        "movimiento_caja_cirugia_idx": {
+          "name": "movimiento_caja_cirugia_idx",
+          "columns": [
+            "cirugia_id"
+          ],
+          "isUnique": false
+        },
+        "movimiento_caja_ciclo_idx": {
+          "name": "movimiento_caja_ciclo_idx",
+          "columns": [
+            "ciclo_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "movimiento_caja_caja_id_caja_id_fk": {
+          "name": "movimiento_caja_caja_id_caja_id_fk",
+          "tableFrom": "movimiento_caja",
+          "tableTo": "caja",
+          "columnsFrom": [
+            "caja_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "movimiento_caja_usuario_id_usuario_id_fk": {
+          "name": "movimiento_caja_usuario_id_usuario_id_fk",
+          "tableFrom": "movimiento_caja",
+          "tableTo": "usuario",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "movimiento_caja_cirugia_id_cirugia_id_fk": {
+          "name": "movimiento_caja_cirugia_id_cirugia_id_fk",
+          "tableFrom": "movimiento_caja",
+          "tableTo": "cirugia",
+          "columnsFrom": [
+            "cirugia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "movimiento_caja_ciclo_id_ciclo_esterilizacion_id_fk": {
+          "name": "movimiento_caja_ciclo_id_ciclo_esterilizacion_id_fk",
+          "tableFrom": "movimiento_caja",
+          "tableTo": "ciclo_esterilizacion",
+          "columnsFrom": [
+            "ciclo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "movimiento_desde_ck": {
+          "name": "movimiento_desde_ck",
+          "value": "\"estado_desde\" in ('esteril_deposito', 'asignada', 'en_quirofano', 'usada_sucia', 'en_lavado', 'en_armado', 'en_esterilizacion', 'en_cuarentena', 'en_reparacion', 'baja')"
+        },
+        "movimiento_hasta_ck": {
+          "name": "movimiento_hasta_ck",
+          "value": "\"estado_hasta\" in ('esteril_deposito', 'asignada', 'en_quirofano', 'usada_sucia', 'en_lavado', 'en_armado', 'en_esterilizacion', 'en_cuarentena', 'en_reparacion', 'baja')"
+        }
+      }
+    },
+    "movimiento_stock": {
+      "name": "movimiento_stock",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lote_id": {
+          "name": "lote_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cantidad": {
+          "name": "cantidad",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cirugia_id": {
+          "name": "cirugia_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ocurrido_en": {
+          "name": "ocurrido_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "registrado_en": {
+          "name": "registrado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"
+        },
+        "motivo": {
+          "name": "motivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "movimiento_stock_lote_idx": {
+          "name": "movimiento_stock_lote_idx",
+          "columns": [
+            "lote_id",
+            "ocurrido_en"
+          ],
+          "isUnique": false
+        },
+        "movimiento_stock_cirugia_idx": {
+          "name": "movimiento_stock_cirugia_idx",
+          "columns": [
+            "cirugia_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "movimiento_stock_lote_id_lote_descartable_id_fk": {
+          "name": "movimiento_stock_lote_id_lote_descartable_id_fk",
+          "tableFrom": "movimiento_stock",
+          "tableTo": "lote_descartable",
+          "columnsFrom": [
+            "lote_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "movimiento_stock_cirugia_id_cirugia_id_fk": {
+          "name": "movimiento_stock_cirugia_id_cirugia_id_fk",
+          "tableFrom": "movimiento_stock",
+          "tableTo": "cirugia",
+          "columnsFrom": [
+            "cirugia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "movimiento_stock_usuario_id_usuario_id_fk": {
+          "name": "movimiento_stock_usuario_id_usuario_id_fk",
+          "tableFrom": "movimiento_stock",
+          "tableTo": "usuario",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "movimiento_stock_tipo_ck": {
+          "name": "movimiento_stock_tipo_ck",
+          "value": "\"tipo\" in ('ingreso', 'consumo', 'devolucion', 'vencido', 'ajuste')"
+        },
+        "movimiento_stock_cantidad_ck": {
+          "name": "movimiento_stock_cantidad_ck",
+          "value": "(\"tipo\" = 'ajuste' and \"cantidad\" <> 0) or (\"tipo\" <> 'ajuste' and \"cantidad\" > 0)"
+        }
+      }
+    },
+    "plantilla": {
+      "name": "plantilla",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "procedimiento_id": {
+          "name": "procedimiento_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cirujano_id": {
+          "name": "cirujano_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "vigente": {
+          "name": "vigente",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"
+        }
+      },
+      "indexes": {
+        "plantilla_resolucion_idx": {
+          "name": "plantilla_resolucion_idx",
+          "columns": [
+            "procedimiento_id",
+            "cirujano_id",
+            "vigente"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plantilla_procedimiento_id_procedimiento_id_fk": {
+          "name": "plantilla_procedimiento_id_procedimiento_id_fk",
+          "tableFrom": "plantilla",
+          "tableTo": "procedimiento",
+          "columnsFrom": [
+            "procedimiento_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "plantilla_cirujano_id_cirujano_id_fk": {
+          "name": "plantilla_cirujano_id_cirujano_id_fk",
+          "tableFrom": "plantilla",
+          "tableTo": "cirujano",
+          "columnsFrom": [
+            "cirujano_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "plantilla_vigente_ck": {
+          "name": "plantilla_vigente_ck",
+          "value": "\"vigente\" in (0, 1)"
+        },
+        "plantilla_version_ck": {
+          "name": "plantilla_version_ck",
+          "value": "\"version\" >= 1"
+        }
+      }
+    },
+    "plantilla_caja": {
+      "name": "plantilla_caja",
+      "columns": {
+        "plantilla_id": {
+          "name": "plantilla_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "caja_id": {
+          "name": "caja_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "obligatoria": {
+          "name": "obligatoria",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "plantilla_caja_plantilla_id_plantilla_id_fk": {
+          "name": "plantilla_caja_plantilla_id_plantilla_id_fk",
+          "tableFrom": "plantilla_caja",
+          "tableTo": "plantilla",
+          "columnsFrom": [
+            "plantilla_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "plantilla_caja_caja_id_caja_id_fk": {
+          "name": "plantilla_caja_caja_id_caja_id_fk",
+          "tableFrom": "plantilla_caja",
+          "tableTo": "caja",
+          "columnsFrom": [
+            "caja_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "plantilla_caja_plantilla_id_caja_id_pk": {
+          "columns": [
+            "plantilla_id",
+            "caja_id"
+          ],
+          "name": "plantilla_caja_plantilla_id_caja_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "plantilla_caja_obligatoria_ck": {
+          "name": "plantilla_caja_obligatoria_ck",
+          "value": "\"obligatoria\" in (0, 1)"
+        }
+      }
+    },
+    "plantilla_descartable": {
+      "name": "plantilla_descartable",
+      "columns": {
+        "plantilla_id": {
+          "name": "plantilla_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "descartable_id": {
+          "name": "descartable_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cantidad": {
+          "name": "cantidad",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "plantilla_descartable_plantilla_id_plantilla_id_fk": {
+          "name": "plantilla_descartable_plantilla_id_plantilla_id_fk",
+          "tableFrom": "plantilla_descartable",
+          "tableTo": "plantilla",
+          "columnsFrom": [
+            "plantilla_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "plantilla_descartable_descartable_id_descartable_id_fk": {
+          "name": "plantilla_descartable_descartable_id_descartable_id_fk",
+          "tableFrom": "plantilla_descartable",
+          "tableTo": "descartable",
+          "columnsFrom": [
+            "descartable_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "plantilla_descartable_plantilla_id_descartable_id_pk": {
+          "columns": [
+            "plantilla_id",
+            "descartable_id"
+          ],
+          "name": "plantilla_descartable_plantilla_id_descartable_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "plantilla_descartable_cantidad_ck": {
+          "name": "plantilla_descartable_cantidad_ck",
+          "value": "\"cantidad\" > 0"
+        }
+      }
+    },
+    "procedimiento": {
+      "name": "procedimiento",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "especialidad": {
+          "name": "especialidad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "duracion_min": {
+          "name": "duracion_min",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "procedimiento_codigo_uq": {
+          "name": "procedimiento_codigo_uq",
+          "columns": [
+            "codigo"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "procedimiento_activo_ck": {
+          "name": "procedimiento_activo_ck",
+          "value": "\"activo\" in (0, 1)"
+        }
+      }
+    },
+    "transicion_valida": {
+      "name": "transicion_valida",
+      "columns": {
+        "estado_desde": {
+          "name": "estado_desde",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado_hasta": {
+          "name": "estado_hasta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "transicion_valida_estado_desde_estado_hasta_pk": {
+          "columns": [
+            "estado_desde",
+            "estado_hasta"
+          ],
+          "name": "transicion_valida_estado_desde_estado_hasta_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "transicion_desde_ck": {
+          "name": "transicion_desde_ck",
+          "value": "\"estado_desde\" in ('esteril_deposito', 'asignada', 'en_quirofano', 'usada_sucia', 'en_lavado', 'en_armado', 'en_esterilizacion', 'en_cuarentena', 'en_reparacion', 'baja')"
+        },
+        "transicion_hasta_ck": {
+          "name": "transicion_hasta_ck",
+          "value": "\"estado_hasta\" in ('esteril_deposito', 'asignada', 'en_quirofano', 'usada_sucia', 'en_lavado', 'en_armado', 'en_esterilizacion', 'en_cuarentena', 'en_reparacion', 'baja')"
+        }
+      }
+    },
+    "usuario": {
+      "name": "usuario",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pin_hash": {
+          "name": "pin_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rol": {
+          "name": "rol",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "intentos_fallidos": {
+          "name": "intentos_fallidos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "bloqueado_hasta": {
+          "name": "bloqueado_hasta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"
+        }
+      },
+      "indexes": {
+        "usuario_email_uq": {
+          "name": "usuario_email_uq",
+          "columns": [
+            "email"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "usuario_rol_ck": {
+          "name": "usuario_rol_ck",
+          "value": "\"rol\" in ('instrumentadora', 'esterilizacion', 'supervisor', 'admin')"
+        },
+        "usuario_activo_ck": {
+          "name": "usuario_activo_ck",
+          "value": "\"activo\" in (0, 1)"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
