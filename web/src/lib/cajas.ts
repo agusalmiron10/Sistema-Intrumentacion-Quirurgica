@@ -12,7 +12,18 @@ import { hayRed, pedir, SinRed } from './api';
  */
 
 export async function sincronizarCatalogo(): Promise<number> {
-  const cajas = await pedir<CajaLocal[]>('/api/cajas?limite=500');
+  const [cajas, ciclos, cirugias] = await Promise.all([
+    pedir<CajaLocal[]>('/api/cajas?limite=500'),
+    pedir('/api/ciclos?limite=50').catch(() => []),
+    pedir('/api/cirugias?estado=programada&limite=100')
+      .then((prog) =>
+        pedir('/api/cirugias?estado=preparada&limite=100').then((prep) => [
+          ...(prog as any[]),
+          ...(prep as any[]),
+        ]),
+      )
+      .catch(() => []),
+  ]);
   const db = await abrirAlmacen();
 
   const tx = db.transaction('cajas', 'readwrite');
@@ -27,6 +38,8 @@ export async function sincronizarCatalogo(): Promise<number> {
   await tx.done;
 
   await guardarMeta('catalogoActualizadoEn', new Date().toISOString());
+  await guardarMeta('ciclosActivos', ciclos);
+  await guardarMeta('cirugias', cirugias);
   return cajas.length;
 }
 

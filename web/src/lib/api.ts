@@ -49,7 +49,19 @@ export async function pedir<T>(ruta: string, opciones: Opciones = {}): Promise<T
   }
 
   const texto = await respuesta.text();
-  const cuerpo: unknown = texto ? JSON.parse(texto) : null;
+
+  // Un 500 puede venir con cuerpo de texto plano. Si se asume JSON y se
+  // parsea a ciegas, el error del servidor se convierte en un SyntaxError
+  // opaco y la pantalla termina mostrando un mensaje generico que no dice
+  // nada. Paso por esto una vez y no quiero volver a pasar.
+  let cuerpo: unknown = null;
+  if (texto) {
+    try {
+      cuerpo = JSON.parse(texto);
+    } catch {
+      cuerpo = { mensaje: texto.slice(0, 300) };
+    }
+  }
 
   if (!respuesta.ok) {
     const mensaje =

@@ -12,8 +12,17 @@ export interface Operacion {
   etiqueta: string;
   descripcion: string;
   hasta: EstadoCaja;
-  /** Operaciones que van a necesitar elegir un ciclo o una cirugia (fases 4 y 5). */
-  pendienteDeFase?: string;
+  /**
+   * La operacion requiere seleccionar el ciclo activo antes de escanear.
+   * Solo aplica a las operaciones que mueven cajas dentro de un ciclo de
+   * esterilizacion (cargar autoclave, retirar del autoclave).
+   */
+  necesitaCiclo?: true;
+  /**
+   * La operacion requiere seleccionar la cirugia antes de escanear.
+   * Solo aplica a "Asignar a cirugia".
+   */
+  necesitaCirugia?: true;
 }
 
 export const OPERACIONES: readonly Operacion[] = [
@@ -34,13 +43,14 @@ export const OPERACIONES: readonly Operacion[] = [
     etiqueta: 'Cargar autoclave',
     descripcion: 'Armada y controlada, entra al equipo',
     hasta: 'en_esterilizacion',
-    pendienteDeFase: 'El ciclo se elige a partir de la fase 4',
+    necesitaCiclo: true,
   },
   {
     id: 'cuarentena',
     etiqueta: 'Retirar del autoclave',
     descripcion: 'Termino el ciclo, queda esperando el control biologico',
     hasta: 'en_cuarentena',
+    necesitaCiclo: true,
   },
   {
     id: 'deposito',
@@ -53,7 +63,7 @@ export const OPERACIONES: readonly Operacion[] = [
     etiqueta: 'Asignar a cirugia',
     descripcion: 'Se reserva para una cirugia programada',
     hasta: 'asignada',
-    pendienteDeFase: 'La cirugia se elige a partir de la fase 5',
+    necesitaCirugia: true,
   },
   {
     id: 'quirofano',

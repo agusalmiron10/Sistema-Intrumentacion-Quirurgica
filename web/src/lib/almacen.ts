@@ -35,6 +35,8 @@ export interface EventoEnCola {
   estadoDesde: EstadoCaja;
   estadoHasta: EstadoCaja;
   ocurridoEn: string;
+  cicloId?: string | null;
+  cirugiaId?: string | null;
   observacion?: string | null;
 }
 

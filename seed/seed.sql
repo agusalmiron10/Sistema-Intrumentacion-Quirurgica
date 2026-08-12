@@ -15,10 +15,10 @@
 --   Marcela 1234 | Silvia 2345 | Roberto 3456 | Admin 9999
 -- ---------------------------------------------------------------------------
 INSERT INTO usuario (id, nombre, email, pin_hash, rol) VALUES
-  ('u-001', 'Marcela Duarte',  'marcela.duarte@hospital.local',  'pbkdf2$sha256$210000$naAk9qui7OyCCLImuaEEqg==$eb0ze/te8W6Ub1yY0Jr6TGuBwU1vFcv5OvsLNrQ+CB8=', 'instrumentadora'),
-  ('u-002', 'Silvia Ocampo',   'silvia.ocampo@hospital.local',   'pbkdf2$sha256$210000$clDiQh17Kc9qJacmq1a4KA==$+wXZbsbxdRQ1God/K+9EVOaXv7ytK2UJGhHE1JNlTMM=', 'esterilizacion'),
-  ('u-003', 'Roberto Paz',     'roberto.paz@hospital.local',     'pbkdf2$sha256$210000$A4j+zPCXfTpBc5MzglwLUg==$BF3umZJF9KL6sD8yDc/JGqN0uHwAF0SnGrYaFPRz9/s=', 'supervisor'),
-  ('u-004', 'Administracion',  'admin@hospital.local',           'pbkdf2$sha256$210000$Js78G7F6z7QjgtF60W1Qzw==$Xkmr5p0igzGw4wNL66Xh5fBePTwpcEhfR+KMfokcCYU=', 'admin');
+  ('u-001', 'Marcela Duarte',  'marcela.duarte@hospital.local',  'pbkdf2$sha256$100000$4HGCwfJ+zYhP/xJlxufjPw==$VDHfTjBlw/gAlw3r947ptuqMYgtlWTfyh3YwIhG8d44=', 'instrumentadora'),
+  ('u-002', 'Silvia Ocampo',   'silvia.ocampo@hospital.local',   'pbkdf2$sha256$100000$uBjV8ErnM63bETnTUrPE6Q==$+5SK2nSHRpCDFTA+oL81mGRt3pjoJ92fChTS8pUpw60=', 'esterilizacion'),
+  ('u-003', 'Roberto Paz',     'roberto.paz@hospital.local',     'pbkdf2$sha256$100000$l5D+EJTYCbMaC/5lud/Rgg==$EXikSidignWbxEoxi1H1+/nblGAk636SNo0lMEH8YUM=', 'supervisor'),
+  ('u-004', 'Administracion',  'admin@hospital.local',           'pbkdf2$sha256$100000$B1ucGhMf5BlPn6DdTmjqtw==$tx9T/R67wd9nvx1aZSf+q/sNwU5Bm/arQpPqcc83N30=', 'admin');
 
 INSERT INTO cirujano (id, nombre, matricula, especialidad, notas) VALUES
   ('ciru-001', 'Dr. Alejandro Sosa',  'MN 84213', 'Cirugia general', 'Prefiere Metzenbaum largo. Pide clips de titanio siempre.'),

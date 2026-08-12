@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { refDesdeTexto } from '../../../src/dominio/identificadores';
 
 type EstadoCamara = 'iniciando' | 'leyendo' | 'sin_permiso' | 'sin_camara' | 'error';
+type EstadoError = { tipo: EstadoCamara; detalle?: string };
 
 interface Props {
   activa: boolean;
@@ -23,7 +24,7 @@ interface Props {
 export function Camara({ activa, onLectura }: Props) {
   const video = useRef<HTMLVideoElement>(null);
   const ultima = useRef<{ ref: string; cuando: number }>({ ref: '', cuando: 0 });
-  const [estado, setEstado] = useState<EstadoCamara>('iniciando');
+  const [estado, setEstado] = useState<EstadoError>({ tipo: 'iniciando' });
 
   // El callback se guarda en un ref para que cambiarlo no reinicie la camara:
   // reabrirla en cada render mostraria un parpadeo constante y perderia
@@ -62,13 +63,16 @@ export function Camara({ activa, onLectura }: Props) {
           return;
         }
         detener = () => controles.stop();
-        setEstado('leyendo');
+        setEstado({ tipo: 'leyendo' });
       } catch (error) {
         const nombre = error instanceof Error ? error.name : '';
-        if (nombre === 'NotAllowedError' || nombre === 'SecurityError') setEstado('sin_permiso');
+        const mensaje = error instanceof Error ? error.message : String(error);
+        console.error('[Camara] Error al abrir la camara:', nombre, mensaje);
+        if (nombre === 'NotAllowedError' || nombre === 'SecurityError')
+          setEstado({ tipo: 'sin_permiso' });
         else if (nombre === 'NotFoundError' || nombre === 'OverconstrainedError')
-          setEstado('sin_camara');
-        else setEstado('error');
+          setEstado({ tipo: 'sin_camara' });
+        else setEstado({ tipo: 'error', detalle: nombre ? `${nombre}: ${mensaje}` : mensaje });
       }
     })();
 
@@ -80,7 +84,7 @@ export function Camara({ activa, onLectura }: Props) {
 
   if (!activa) return null;
 
-  if (estado === 'sin_permiso') {
+  if (estado.tipo === 'sin_permiso') {
     return (
       <div className="aviso aviso--error">
         <strong>La camara esta bloqueada</strong>
@@ -95,7 +99,7 @@ export function Camara({ activa, onLectura }: Props) {
     );
   }
 
-  if (estado === 'sin_camara') {
+  if (estado.tipo === 'sin_camara') {
     return (
       <div className="aviso aviso--error">
         <strong>No se encontro ninguna camara</strong>
@@ -104,14 +108,16 @@ export function Camara({ activa, onLectura }: Props) {
     );
   }
 
-  if (estado === 'error') {
+  if (estado.tipo === 'error') {
     return (
       <div className="aviso aviso--error">
         <strong>No se pudo abrir la camara</strong>
-        <p>
-          La camara necesita HTTPS. Si estas en una direccion http, esa es la causa. Se puede
-          seguir con el campo de codigo.
-        </p>
+        <p>Hubo un error inesperado al iniciar la camara. Se puede seguir con el campo de codigo.</p>
+        {estado.detalle && (
+          <p className="aviso__nota" style={{ fontFamily: 'monospace', fontSize: '0.8em' }}>
+            {estado.detalle}
+          </p>
+        )}
       </div>
     );
   }
@@ -120,7 +126,7 @@ export function Camara({ activa, onLectura }: Props) {
     <div className="camara">
       <video ref={video} className="camara__video" muted playsInline />
       <div className="camara__marco" aria-hidden="true" />
-      {estado === 'iniciando' && <p className="camara__estado">Abriendo la camara...</p>}
+      {estado.tipo === 'iniciando' && <p className="camara__estado">Abriendo la camara...</p>}
     </div>
   );
 }

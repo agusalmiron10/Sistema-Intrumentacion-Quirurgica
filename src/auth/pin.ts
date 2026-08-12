@@ -12,7 +12,22 @@
 
 const ALGORITMO = 'pbkdf2';
 const HASH = 'sha256';
-const ITERACIONES = 210_000; // recomendacion OWASP para PBKDF2-SHA256
+
+/**
+ * Tope del runtime de Workers: por encima de 100.000 iteraciones, WebCrypto
+ * responde `NotSupportedError: iteration counts above 100000 are not supported`.
+ * No es configurable.
+ *
+ * Queda por debajo de la recomendacion de OWASP (210.000), y conviene ser
+ * honesto sobre lo que eso significa aca: con un PIN de 4 a 6 digitos el
+ * espacio de claves es de 10^4 a 10^6, asi que quien consiga los hashes los
+ * rompe por fuerza bruta con 100.000 iteraciones o con 210.000. Lo que hace
+ * que el PIN sea aceptable no son las iteraciones, es el bloqueo tras cinco
+ * intentos fallidos (ver servicios/usuarios.ts).
+ */
+export const MAX_ITERACIONES_WORKERS = 100_000;
+
+const ITERACIONES = MAX_ITERACIONES_WORKERS;
 const LARGO_SALT = 16;
 const LARGO_CLAVE = 32;
 
@@ -78,6 +93,19 @@ export async function verificarPin(pin: string, almacenado: string): Promise<boo
   const iteraciones = Number.parseInt(iteracionesTexto, 10);
   if (!Number.isSafeInteger(iteraciones) || iteraciones < 1) return false;
 
-  const derivado = await derivar(pin, desdeBase64(saltB64), iteraciones);
-  return igualesEnTiempoConstante(derivado, desdeBase64(hashB64));
+  // Un hash generado con más iteraciones de las que el runtime admite no se
+  // puede verificar: en Workers dispararía un NotSupportedError, y en local
+  // bloquearía el proceso durante minutos. Devolverlo como falso es la
+  // respuesta correcta: el ingreso falla como PIN incorrecto y el admin puede
+  // blanquearlo desde la pantalla de usuarios.
+  if (iteraciones > MAX_ITERACIONES_WORKERS) return false;
+
+  try {
+    const derivado = await derivar(pin, desdeBase64(saltB64), iteraciones);
+    return igualesEnTiempoConstante(derivado, desdeBase64(hashB64));
+  } catch {
+    // Cualquier otro error inesperado (salt malformado, etc.) falla igual:
+    // PIN incorrecto, no 500.
+    return false;
+  }
 }

@@ -76,6 +76,8 @@ export async function sincronizar(usuarioId: string): Promise<ResultadoSync> {
           estadoDesde: e.estadoDesde,
           estadoHasta: e.estadoHasta,
           ocurridoEn: e.ocurridoEn,
+          ...(e.cicloId ? { cicloId: e.cicloId } : {}),
+          ...(e.cirugiaId ? { cirugiaId: e.cirugiaId } : {}),
           observacion: e.observacion ?? null,
         })),
       },

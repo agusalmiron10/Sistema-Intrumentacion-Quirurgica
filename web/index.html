@@ -3,11 +3,80 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f766e" />
-    <title>Instrumental</title>
+    <meta name="theme-color" content="#0d9488" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>Instrumental Quirúrgico</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f1f5f9;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      }
+      #splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: #f1f5f9;
+        z-index: 9999;
+        transition: opacity 0.3s;
+      }
+      #splash__icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        background: #0d9488;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        box-shadow: 0 4px 16px rgba(13,148,136,.35);
+      }
+      #splash__name {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+      }
+      #splash__spin {
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 3px solid #e2e8f0;
+        border-top-color: #0d9488;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
+    <div id="splash">
+      <div id="splash__icon">⚕️</div>
+      <div id="splash__name">Instrumental</div>
+      <div id="splash__spin"></div>
+    </div>
     <div id="raiz"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Oculta el splash cuando React monta
+      var obs = new MutationObserver(function() {
+        var raiz = document.getElementById('raiz');
+        var s = document.getElementById('splash');
+        if (s && raiz && raiz.children.length > 0) {
+          s.style.opacity = '0';
+          setTimeout(function() { if (s.parentNode) s.parentNode.removeChild(s); }, 350);
+          obs.disconnect();
+        }
+      });
+      obs.observe(document.getElementById('raiz'), { childList: true });
+    </script>
   </body>
 </html>

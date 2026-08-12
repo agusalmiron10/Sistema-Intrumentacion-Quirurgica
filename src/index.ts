@@ -59,9 +59,20 @@ app.get('/c/:id', async (c) => {
     return c.html(
       `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
        <title>Caja no encontrada</title>
-       <body style="font-family:system-ui;padding:2rem;max-width:32rem;margin:auto">
-       <h1>Caja no encontrada</h1>
-       <p>El codigo escaneado no corresponde a ninguna caja registrada.</p>`,
+       <style>
+         body { font-family: system-ui, sans-serif; background: #f1f5f9; color: #334155; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 1rem; }
+         .card { background: #fff; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); text-align: center; max-width: 24rem; }
+         .icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+         h1 { margin: 0 0 0.5rem; font-size: 1.5rem; color: #0f172a; }
+         p { margin: 0; color: #64748b; line-height: 1.5; }
+       </style>
+       <body>
+         <div class="card">
+           <span class="icon">🔍</span>
+           <h1>Caja no encontrada</h1>
+           <p>El código escaneado no corresponde a ninguna caja registrada en el sistema.</p>
+         </div>
+       </body>`,
       404,
     );
   }
@@ -77,18 +88,34 @@ app.get('/c/:id', async (c) => {
   return c.html(
     `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
      <title>${escapar(caja.codigo)}</title>
-     <body style="font-family:system-ui;padding:2rem;max-width:32rem;margin:auto">
-     <h1 style="margin:0;font-size:2.5rem">${escapar(caja.codigo)}</h1>
-     <p style="margin:.25rem 0 1.5rem;color:#555">${escapar(caja.nombre)}</p>
-     <table style="border-collapse:collapse;width:100%">
-     ${filas
-       .map(
-         ([clave, valor]) =>
-           `<tr><td style="padding:.5rem 0;color:#666">${escapar(clave)}</td>` +
-           `<td style="padding:.5rem 0;text-align:right"><strong>${escapar(valor)}</strong></td></tr>`,
-       )
-       .join('')}
-     </table>`,
+     <style>
+       body { font-family: system-ui, sans-serif; background: #f1f5f9; color: #334155; margin: 0; padding: 1.5rem 1rem; display: flex; justify-content: center; }
+       .card { background: #fff; width: 100%; max-width: 26rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); overflow: hidden; }
+       .header { background: #0d9488; color: #fff; padding: 1.5rem; text-align: center; }
+       .codigo { margin: 0; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1; }
+       .nombre { margin: 0.5rem 0 0; font-size: 1.1rem; color: #ccfbf1; font-weight: 500; }
+       .content { padding: 1.5rem; }
+       .row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; }
+       .row:last-child { border-bottom: none; padding-bottom: 0; }
+       .label { color: #64748b; font-size: 0.875rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+       .value { font-weight: 700; color: #0f172a; text-align: right; }
+     </style>
+     <body>
+       <div class="card">
+         <div class="header">
+           <h1 class="codigo">${escapar(caja.codigo)}</h1>
+           <p class="nombre">${escapar(caja.nombre)}</p>
+         </div>
+         <div class="content">
+           ${filas
+             .map(
+                ([clave, valor]) =>
+                  `<div class="row"><span class="label">${escapar(clave)}</span><span class="value">${escapar(valor)}</span></div>`,
+             )
+             .join('')}
+         </div>
+       </div>
+     </body>`,
   );
 });
 

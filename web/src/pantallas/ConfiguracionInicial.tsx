@@ -45,9 +45,13 @@ export function ConfiguracionInicial({ onListo }: Props) {
       } else if (problema instanceof ErrorApi && problema.estado === 409) {
         setError('El sistema ya tiene usuarios. Pedile a un administrador que te de de alta.');
       } else if (problema instanceof ErrorApi) {
-        setError(problema.message);
+        setError(`${problema.message} (error ${problema.estado})`);
       } else {
-        setError('No se pudo crear el usuario.');
+        setError(
+          problema instanceof Error
+            ? `No se pudo crear el usuario: ${problema.message}`
+            : 'No se pudo crear el usuario.',
+        );
       }
     } finally {
       setEnviando(false);

@@ -11,15 +11,18 @@ interface Props {
 
 const TECLAS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'borrar', '0', 'ok'] as const;
 
-/**
- * Ingreso por PIN.
- *
- * Primero se elige el usuario y despues se tipea el PIN. Nunca al reves: sin
- * usuario elegido habria que buscar "quien tiene este PIN", y con cuatro
- * digitos las colisiones son cuestion de tiempo.
- *
- * El teclado es de botones grandes porque esto se usa con guantes.
- */
+const ROLES_ES: Record<string, string> = {
+  admin: 'Administrador',
+  supervisor: 'Supervisor',
+  instrumentadora: 'Instrumentadora',
+  esterilizacion: 'Esterilización',
+  medico: 'Médico',
+};
+
+function iniciales(nombre: string): string {
+  return nombre.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
+}
+
 export function Ingreso({ onIngreso }: Props) {
   const [usuarios, setUsuarios] = useState<UsuarioSesion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -35,15 +38,10 @@ export function Ingreso({ onIngreso }: Props) {
         setUsuarios(lista);
         await guardarMeta('usuarios', lista);
       } catch {
-        // Sin señal se muestra la ultima lista conocida: al menos se ve quien
-        // trabaja aca, aunque el PIN no se pueda verificar hasta tener red.
         const guardados = await leerMeta<UsuarioSesion[]>('usuarios');
         if (guardados) setUsuarios(guardados);
-        setError('Sin conexion: hace falta señal para ingresar.');
+        setError('Sin conexión: hace falta señal para ingresar.');
       } finally {
-        // Sin esto, una lista vacia se ve igual que una que todavia no llego:
-        // la pantalla queda diciendo "cargando" para siempre y nadie entiende
-        // que el sistema no tiene usuarios dados de alta.
         setCargando(false);
       }
     })();
@@ -65,9 +63,9 @@ export function Ingreso({ onIngreso }: Props) {
     } catch (problema) {
       setPin('');
       if (problema instanceof SinRed) {
-        setError('Sin conexion: no se puede verificar el PIN.');
+        setError('Sin conexión: no se puede verificar el PIN.');
       } else if (problema instanceof ErrorApi && problema.estado === 429) {
-        setError('Demasiados intentos. Esperar unos minutos antes de reintentar.');
+        setError('Demasiados intentos. Esperá unos minutos.');
       } else if (problema instanceof ErrorApi) {
         const restantes = (problema.cuerpo as { intentosRestantes?: number })?.intentosRestantes;
         setError(
@@ -85,95 +83,127 @@ export function Ingreso({ onIngreso }: Props) {
 
   const tocar = (tecla: string): void => {
     habilitarSonido();
-    if (tecla === 'borrar') {
-      setPin((actual) => actual.slice(0, -1));
-      return;
-    }
-    if (tecla === 'ok') {
-      if (pin.length >= 4) void ingresar(pin);
-      return;
-    }
-    setPin((actual) => (actual.length >= 6 ? actual : actual + tecla));
+    if (tecla === 'borrar') { setPin((a) => a.slice(0, -1)); return; }
+    if (tecla === 'ok') { if (pin.length >= 4) void ingresar(pin); return; }
+    setPin((a) => (a.length >= 6 ? a : a + tecla));
   };
 
-  if (!elegido) {
-    return (
-      <main className="pantalla pantalla--centrada">
-        <h1 className="titulo">Quien sos</h1>
-        {error && <p className="aviso aviso--error">{error}</p>}
-        <ul className="lista-usuarios">
-          {usuarios.map((usuario) => (
-            <li key={usuario.id}>
-              <button
-                type="button"
-                className="usuario"
-                onClick={() => {
-                  setElegido(usuario);
-                  setError(null);
-                }}
-              >
-                <span className="usuario__nombre">{usuario.nombre}</span>
-                <span className="usuario__rol">{usuario.rol}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        {cargando && <p className="sutil">Cargando usuarios...</p>}
-
-        {!cargando && usuarios.length === 0 && !error && (
-          <div className="aviso aviso--atencion">
-            <strong>Todavia no hay usuarios cargados</strong>
-            <p>
-              El sistema esta funcionando, pero nadie puede entrar hasta que se den de alta las
-              personas que lo van a usar.
-            </p>
-            <p className="aviso__nota">
-              Se cargan desde la administracion del sistema, con un PIN por persona.
+  return (
+    <div className="login-layout">
+      {/* Panel izquierdo — branding */}
+      <div className="login-brand">
+        <div className="login-brand__inner">
+          <div className="login-brand__logo">
+            <span className="login-brand__icon">⚕️</span>
+            <div>
+              <div className="login-brand__name">Instrumental</div>
+              <div className="login-brand__tagline">Gestión quirúrgica</div>
+            </div>
+          </div>
+          <div className="login-brand__body">
+            <h1 className="login-brand__heading">
+              Trazabilidad<br />de nivel médico.
+            </h1>
+            <p className="login-brand__sub">
+              Control de cajas, ciclos de esterilización, stock de descartables y trazabilidad completa por cirugía.
             </p>
           </div>
-        )}
-      </main>
-    );
-  }
-
-  return (
-    <main className="pantalla pantalla--centrada">
-      <button
-        type="button"
-        className="boton boton--texto"
-        onClick={() => {
-          setElegido(null);
-          setPin('');
-          setError(null);
-        }}
-      >
-        &larr; Cambiar de usuario
-      </button>
-
-      <h1 className="titulo">{elegido.nombre}</h1>
-      <p className="sutil">Ingresa tu PIN</p>
-
-      <div className="pin" aria-label={`PIN de ${pin.length} digitos`}>
-        {Array.from({ length: 6 }, (_, i) => (
-          <span key={i} className={`pin__punto ${i < pin.length ? 'pin__punto--lleno' : ''}`} />
-        ))}
+          <div className="login-brand__pills">
+            <span className="login-pill">📷 Escaneo offline</span>
+            <span className="login-pill">♻️ Esterilización</span>
+            <span className="login-pill">📊 Trazabilidad</span>
+          </div>
+        </div>
       </div>
 
-      {error && <p className="aviso aviso--error">{error}</p>}
+      {/* Panel derecho — formulario */}
+      <div className="login-form-panel">
+        <div className="login-card">
+          {!elegido ? (
+            <>
+              <div className="login-card__header">
+                <h2 className="login-card__title">Seleccioná tu usuario</h2>
+                <p className="login-card__sub">Después vas a ingresar tu PIN</p>
+              </div>
 
-      <div className="teclado">
-        {TECLAS.map((tecla) => (
-          <button
-            key={tecla}
-            type="button"
-            className={`tecla ${tecla === 'ok' ? 'tecla--ok' : ''} ${tecla === 'borrar' ? 'tecla--borrar' : ''}`}
-            onClick={() => tocar(tecla)}
-            disabled={enviando || (tecla === 'ok' && pin.length < 4)}
-          >
-            {tecla === 'borrar' ? '⌫' : tecla === 'ok' ? 'Entrar' : tecla}
-          </button>
-        ))}
+              {error && <p className="aviso aviso--error" style={{ marginBottom: '1rem' }}>{error}</p>}
+
+              {cargando ? (
+                <div className="login-skeleton">
+                  <div className="skeleton-row" />
+                  <div className="skeleton-row" />
+                </div>
+              ) : usuarios.length === 0 && !error ? (
+                <div className="aviso aviso--atencion">
+                  <strong>Sin usuarios</strong>
+                  <p>El sistema está activo, pero no hay usuarios cargados todavía.</p>
+                </div>
+              ) : (
+                <ul className="login-users">
+                  {usuarios.map((u) => (
+                    <li key={u.id}>
+                      <button
+                        type="button"
+                        className="login-user"
+                        onClick={() => { setElegido(u); setError(null); }}
+                      >
+                        <div className="login-user__avatar">{iniciales(u.nombre)}</div>
+                        <div className="login-user__info">
+                          <span className="login-user__name">{u.nombre}</span>
+                          <span className="login-user__role">{ROLES_ES[u.rol] ?? u.rol}</span>
+                        </div>
+                        <span className="login-user__arrow">→</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="login-card__header">
+                <button
+                  type="button"
+                  className="login-back"
+                  onClick={() => { setElegido(null); setPin(''); setError(null); }}
+                >
+                  ← Volver
+                </button>
+                <div className="login-who">
+                  <div className="login-who__avatar">{iniciales(elegido.nombre)}</div>
+                  <div>
+                    <div className="login-who__name">{elegido.nombre}</div>
+                    <div className="login-who__role">{ROLES_ES[elegido.rol] ?? elegido.rol}</div>
+                  </div>
+                </div>
+                <p className="login-card__sub">Ingresá tu PIN</p>
+              </div>
+
+              <div className="pin-display">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <span key={i} className={`pin-dot ${i < pin.length ? 'pin-dot--filled' : ''}`} />
+                ))}
+              </div>
+
+              {error && <p className="aviso aviso--error" style={{ margin: '0 0 0.75rem' }}>{error}</p>}
+
+              <div className="pin-pad">
+                {TECLAS.map((tecla) => (
+                  <button
+                    key={tecla}
+                    type="button"
+                    className={`pin-key ${tecla === 'ok' ? 'pin-key--ok' : ''} ${tecla === 'borrar' ? 'pin-key--del' : ''}`}
+                    onClick={() => tocar(tecla)}
+                    disabled={enviando || (tecla === 'ok' && pin.length < 4)}
+                  >
+                    {tecla === 'borrar' ? '⌫' : tecla === 'ok' ? (enviando ? '...' : 'Entrar') : tecla}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

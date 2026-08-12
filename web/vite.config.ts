@@ -20,7 +20,7 @@ export default defineConfig({
         short_name: 'Instrumental',
         description: 'Trazabilidad de cajas de instrumental quirurgico',
         theme_color: '#0f766e',
-        background_color: '#ffffff',
+        background_color: '#f1f5f9',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -36,6 +36,10 @@ export default defineConfig({
         // de caja desactualizados, que es peor que no mostrar nada.
         navigateFallbackDenylist: [/^\/api\//, /^\/c\//],
         runtimeCaching: [],
+        // Cuando se detecta una version nueva, el SW toma control inmediatamente
+        // sin esperar a que el usuario cierre todas las pestanas.
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],

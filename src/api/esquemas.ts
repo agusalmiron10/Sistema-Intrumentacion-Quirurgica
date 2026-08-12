@@ -322,3 +322,62 @@ export type CrearCaja = z.infer<typeof crearCajaSchema>;
 export type ActualizarCaja = z.infer<typeof actualizarCajaSchema>;
 export type FiltrosCaja = z.infer<typeof filtrosCajaSchema>;
 export type OpcionesEtiquetas = z.infer<typeof etiquetasSchema>;
+
+// ---------------------------------------------------------------------------
+// Catálogos: cirujanos, procedimientos, instrumentos
+// ---------------------------------------------------------------------------
+
+export const crearCirujanoSchema = z.object({
+  nombre: z.string().trim().min(1).max(120),
+  matricula: z.string().trim().min(1).max(40),
+  especialidad: z.string().trim().max(80).nullish(),
+  notas: z.string().trim().max(500).nullish(),
+});
+
+export const actualizarCirujanoSchema = z
+  .strictObject({
+    nombre: z.string().trim().min(1).max(120),
+    matricula: z.string().trim().min(1).max(40),
+    especialidad: z.string().trim().max(80).nullable(),
+    notas: z.string().trim().max(500).nullable(),
+    activo: z.boolean(),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: 'No hay nada que actualizar' });
+
+export const crearProcedimientoSchema = z.object({
+  nombre: z.string().trim().min(1).max(120),
+  codigo: z.string().trim().min(1).max(20).toUpperCase(),
+  especialidad: z.string().trim().max(80).nullish(),
+  duracionMin: z.number().int().positive().max(600).nullish(),
+});
+
+export const actualizarProcedimientoSchema = z
+  .strictObject({
+    nombre: z.string().trim().min(1).max(120),
+    codigo: z.string().trim().min(1).max(20).toUpperCase(),
+    especialidad: z.string().trim().max(80).nullable(),
+    duracionMin: z.number().int().positive().max(600).nullable(),
+    activo: z.boolean(),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: 'No hay nada que actualizar' });
+
+export const crearInstrumentoTipoSchema = z.object({
+  nombre: z.string().trim().min(1).max(120),
+  codigo: z.string().trim().min(1).max(32).toUpperCase(),
+  fabricante: z.string().trim().max(80).nullish(),
+  termosensible: z.boolean().default(false),
+});
+
+export const actualizarInstrumentoTipoSchema = z
+  .strictObject({
+    nombre: z.string().trim().min(1).max(120),
+    codigo: z.string().trim().min(1).max(32).toUpperCase(),
+    fabricante: z.string().trim().max(80).nullable(),
+    termosensible: z.boolean(),
+    activo: z.boolean(),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: 'No hay nada que actualizar' });
+
